@@ -1,0 +1,166 @@
+---
+title: Release Strategy
+---
+
+## Overview
+
+We use Release Please for automated releases and changelog generation. Release Please analyzes conventional commits and creates "Release PRs" that batch changes together. When a Release PR is merged, a GitHub Release is automatically created with a generated changelog.
+
+This approach gives us control over release timing while automating the tedious parts of versioning and changelog management.
+
+## How It Works
+
+Release Please runs on every push to the main branch. It analyzes commits since the last release and either creates or updates a Release PR. The Release PR contains version bumps and changelog updates based on conventional commit messages.
+
+```
+Push to main → Release Please analyzes commits → Creates/updates Release PR
+                                                         ↓
+                                               Review & merge when ready
+                                                         ↓
+                                              GitHub Release created automatically
+```
+
+The key insight is that Release Please maintains one open Release PR at a time. Each push updates the existing PR rather than creating a new one. This enables batching multiple changes into a single release.
+
+## Version Bumping
+
+Versions are determined automatically based on commit types following semantic versioning:
+
+| Commit Type | Version Bump | Changelog Section |
+|-------------|--------------|-------------------|
+| `feat:` | Minor (0.x.0) | Features |
+| `fix:` | Patch (0.0.x) | Bug Fixes |
+| `perf:` | Patch (0.0.x) | Performance |
+| `refactor:` | Patch (0.0.x) | Code Refactoring |
+| `feat!:` or `BREAKING CHANGE:` | Major (x.0.0) | Breaking Changes |
+| `docs:`, `chore:`, `ci:`, `test:` | No bump | Hidden from changelog |
+
+The version is calculated from the highest-impact commit in the batch. Three fix commits result in a patch bump. Two fixes plus one feature results in a minor bump. Any breaking change triggers a major bump.
+
+## Batching Releases
+
+Commits accumulate in the Release PR until you decide to merge. This gives you control over release cadence:
+
+**Ship fast**: Merge the Release PR immediately after each feature lands. Every feature gets its own release.
+
+**Ship weekly**: Let commits accumulate throughout the week. Merge the Release PR on Friday (or Monday, to avoid weekend releases).
+
+**Ship milestones**: Wait until a set of related features are complete. The Release PR acts as a staging area for the next version.
+
+### Example Batching Flow
+
+```
+Day 1: Push feat: add feature A     →  Release PR created (v0.3.0)
+Day 2: Push fix: bug in feature A   →  Release PR updated (still v0.3.0)
+Day 3: Push feat: add feature B     →  Release PR updated (still v0.3.0)
+Day 5: Merge the Release PR         →  v0.3.0 released with all changes
+Day 6: Push fix: hotfix             →  NEW Release PR created (v0.3.1)
+```
+
+## Changelog Generation
+
+Release Please generates changelogs from conventional commit messages. Commits are grouped by type and formatted as bullet points with links to the commit hash.
+
+```markdown
+## [0.3.0](https://github.com/org/repo/compare/v0.2.0...v0.3.0) (2024-12-14)
+
+### Features
+
+* add feature A ([abc1234](https://github.com/org/repo/commit/abc1234))
+* add feature B ([def5678](https://github.com/org/repo/commit/def5678))
+
+### Bug Fixes
+
+* bug in feature A ([ghi9012](https://github.com/org/repo/commit/ghi9012))
+```
+
+Commits with types like `docs:`, `chore:`, `ci:`, and `test:` are hidden from the changelog by default. They still contribute to the repository history but don't clutter the user-facing release notes.
+
+## Setup
+
+Release Please requires three files in your repository:
+
+**`.github/workflows/release-please.yml`**: The workflow that runs Release Please on push to main and handles the release process when the Release PR is merged.
+
+**`release-please-config.json`**: Configuration for changelog sections, version bump behavior, and which files to update.
+
+**`.release-please-manifest.json`**: Tracks the current version. Release Please updates this automatically.
+
+### Workflow Configuration
+
+```yaml
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - name: Run Release Please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          release-type: node
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    steps:
+      # Build, test, and publish steps here
+```
+
+### Config File
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "bump-minor-pre-major": true,
+      "changelog-sections": [
+        { "type": "feat", "section": "Features" },
+        { "type": "fix", "section": "Bug Fixes" },
+        { "type": "perf", "section": "Performance" },
+        { "type": "refactor", "section": "Code Refactoring" },
+        { "type": "docs", "section": "Documentation", "hidden": true },
+        { "type": "chore", "section": "Miscellaneous", "hidden": true }
+      ]
+    }
+  }
+}
+```
+
+## Best Practices
+
+Write meaningful commit messages. The changelog is only as good as the commits it's generated from. Use the commit body to explain why a change was made, not just what changed.
+
+Keep the Release PR up to date. Review the generated changelog periodically to ensure it accurately represents the changes. You can edit the PR body to add context or clarify entries before merging.
+
+Don't release on Fridays. Unless it's urgent, wait until Monday. This gives you time to respond to any issues without ruining your weekend.
+
+Use breaking change commits sparingly. A `feat!:` or `BREAKING CHANGE:` commit triggers a major version bump. Reserve these for actual breaking changes to your public API or significant behavior changes.
+
+## Comparison to Alternatives
+
+**Semantic Release**: Fully automated, releases on every push. Less control over timing, harder to batch changes.
+
+**Changesets**: Manual changelog entries via CLI. More control over release notes but requires more work per release.
+
+**Manual releases**: Full control but tedious and error-prone. Easy to forget to update changelogs or version numbers.
+
+Release Please strikes a balance: automated changelog generation with manual release timing. The Release PR acts as a review checkpoint before anything is published.
