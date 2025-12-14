@@ -77,6 +77,10 @@ export default defineConfig({
 							label: "DevOps & Deployment",
 							slug: "practices/devops-deployment",
 						},
+						{
+							label: "Release Strategy",
+							slug: "practices/release-strategy",
+						},
 					],
 				},
 			],
