@@ -9,7 +9,7 @@ import robotsTxt from "astro-robots-txt";
 
 // https://astro.build/config
 export default defineConfig({
-	site: "https://handbook.onezero.company",
+	site: "https://handbook.seventwo.studio",
 	integrations: [
 		starlight({
 			plugins: [
@@ -18,12 +18,12 @@ export default defineConfig({
 				starlightImageZoom(),
 				starlightLlmsTxt(),
 			],
-			title: "OneZero Handbook",
+			title: "SevenTwo Studio Handbook",
 			social: [
 				{
 					icon: "github",
 					label: "GitHub",
-					href: "https://github.com/onezerocompany",
+					href: "https://github.com/seventwo-studio",
 				},
 			],
 			sidebar: [
