@@ -1,10 +1,10 @@
-# OneZero Principles
+# SevenTwo Studio Principles
 
 This repository contains the core principles that guide how we operate as a product studio and build products.
 
 ## Who We Are
 
-OneZero is a **product studio** building consumer products and B2B/B2C developer tools (APIs, platforms) that enable new capabilities and reduce complexity in people's lives. We operate as a lean team (1-2 people), shipping multiple products at different stages.
+SevenTwo Studio is a **product studio** building consumer products and B2B/B2C developer tools (APIs, platforms) that enable new capabilities and reduce complexity in people's lives. We operate as a lean team (1-2 people), shipping multiple products at different stages.
 
 ## What's Inside
 
@@ -48,4 +48,4 @@ We're **design-driven**, committed to building beautiful and intuitive products 
 
 ## License
 
-Internal use only - OneZero Company.
+Internal use only - SevenTwo Studio.

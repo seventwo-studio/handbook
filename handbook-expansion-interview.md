@@ -1,4 +1,4 @@
-# OneZero Handbook Expansion - Comprehensive Interview
+# SevenTwo Studio Handbook Expansion - Comprehensive Interview
 
 This detailed interview will help document your practices for potential new handbook sections. Answer questions as thoroughly as possible, providing specific examples, tool names, and concrete practices.
 
@@ -1438,7 +1438,7 @@ GET    /api/v1/users/123/posts # User's posts
 - Internal tRPC for your own frontend
 - 💡 Example: Stripe has public REST API but uses internal RPC
 
-🎯 **Recommendation for OneZero**:
+🎯 **Recommendation for SevenTwo Studio**:
 Given your product studio nature and developer tools focus:
 - **Developer tools / APIs**: REST (needs to be language-agnostic)
 - **Internal tools / dashboards**: tRPC (TypeScript, faster development)

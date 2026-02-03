@@ -1,4 +1,4 @@
-# OneZero Handbook Expansion Questionnaire
+# SevenTwo Studio Handbook Expansion Questionnaire
 
 This questionnaire will help prioritize which sections to add to the handbook next.
 
