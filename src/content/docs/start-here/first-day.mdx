@@ -1,0 +1,144 @@
+---
+title: Learning Path
+description: From zero to confidently shipping features — a milestone-based guide through the handbook.
+---
+
+import { Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+This page walks you through the handbook in a practical order. Each milestone builds on the previous one — read through them sequentially, or jump to wherever you are in your journey.
+
+## Getting Started
+
+Before writing any code, you need the right tools. Our TypeScript projects use Bun as the runtime and package manager, Biome for formatting and linting, and OrbStack for running containers locally.
+
+<Steps>
+
+1. **Install [Bun](https://bun.sh)** — our JavaScript/TypeScript runtime, package manager, and test runner.
+
+   ```bash
+   curl -fsSL https://bun.sh/install | bash
+   ```
+
+2. **Install [OrbStack](https://orbstack.dev)** — a fast, lightweight Docker alternative for running containers and databases locally.
+
+3. **Install [Biome](https://biomejs.dev)** — handles formatting and linting across all TypeScript projects. Most projects include it as a dev dependency, but having it globally is useful too.
+
+   ```bash
+   bun add -g @biomejs/biome
+   ```
+
+4. **Configure Git signing** — all repositories require signed commits. Use GPG or SSH keys.
+
+   ```bash
+   git config --global commit.gpgsign true
+   git config --global tag.gpgsign true
+   ```
+
+   See [GitHub's guide on commit signing](https://docs.github.com/en/authentication/managing-commit-signature-verification) if you haven't set this up before.
+
+5. **Clone a project and verify** — pick any repository, install dependencies, and make sure it builds.
+
+   ```bash
+   git clone git@github.com:seventwo-studio/<project>.git
+   cd <project>
+   bun install
+   bun run build
+   ```
+
+</Steps>
+
+<Aside>
+Not working with TypeScript? Swift projects use Tuist for project generation, Kotlin projects use Gradle with Kotlin DSL, and Rust projects use Cargo. See the relevant language guide for setup details.
+</Aside>
+
+## First PR
+
+Your first pull request is about learning the workflow. The code change itself can be small — what matters is following the process correctly.
+
+**Branch naming** follows the `issue-number/description` format. The issue number links your branch to its tracking issue, making everything traceable.
+
+```bash
+git checkout -b 42/add-user-avatar
+```
+
+**Commits use Conventional Commits** — a standard format that enables automatic changelog generation and semantic versioning. The prefix tells readers what kind of change it is at a glance.
+
+```bash
+git commit -m "feat: add user avatar component"
+```
+
+Common prefixes: `feat:` for new features, `fix:` for bug fixes, `refactor:` for restructuring without behavior changes, `test:` for adding tests, `docs:` for documentation, `chore:` for maintenance.
+
+**Pull requests** need a clear summary of what changed and why, testing instructions so reviewers can verify your work, and links to related issues. Include screenshots for any UI changes.
+
+The full workflow is covered in the [Version Control](/practices/version-control/) guide. Read it before opening your first PR — it explains branch protection, squash merging, pre-commit hooks, and everything else that shapes how code gets into `main`.
+
+<CardGrid>
+  <LinkCard title="Version Control" href="/practices/version-control/" />
+</CardGrid>
+
+## First Feature
+
+Building a complete feature means understanding more than just the language syntax. You need to know how the project is structured, what patterns to follow, and how to write tests that exercise real behavior.
+
+Start by reading the guides for your stack. [Pick Your Stack](/start-here/pick-your-stack/) helps you identify which ones apply. At minimum, read:
+
+1. **The language guide** for your stack — it covers type safety, naming conventions, error handling, and testing patterns specific to that language.
+2. **The app type guide** for your project — it covers architecture (usually MVVM), state management, data fetching, navigation, and deployment patterns.
+3. **[Architecture & Design Patterns](/practices/architecture/)** — SOLID principles, project structure conventions, when to abstract and when not to.
+
+A few things that apply everywhere: we follow MVVM architecture, we separate client state from server state, and we prefer real implementations over mocks in tests. Functions stay under 50 lines. Code should be self-explanatory through clear naming — comments explain "why", not "what".
+
+Write tests alongside your implementation, not after. Every feature should have tests that exercise actual behavior. The language and app type guides explain the specific testing tools and patterns for your stack.
+
+<CardGrid>
+  <LinkCard title="Pick Your Stack" href="/start-here/pick-your-stack/" />
+  <LinkCard title="Architecture & Design Patterns" href="/practices/architecture/" />
+</CardGrid>
+
+## First Review
+
+Code review is how the team maintains quality, shares knowledge, and catches issues early. You'll both receive reviews on your PRs and give reviews on others' — the skills are different but equally important.
+
+**As an author**, your job is to make the reviewer's life easy. Keep PRs under 500 lines changed. Write a clear description. Include testing instructions. If something looks unusual, explain why in a PR comment before the reviewer has to ask.
+
+**As a reviewer**, focus on what automated tools can't catch: correctness, architecture fit, test quality, and security. Don't nitpick formatting — Biome handles that. Distinguish between blocking issues (must fix before merge) and suggestions (nice-to-have improvements). Assume good intent, explain the reasoning behind your suggestions, and offer alternatives when possible.
+
+When you disagree, take it to a call instead of going back and forth in PR comments. It's faster and less likely to create friction.
+
+After merging, the author monitors the deployment. If something breaks, fix it promptly or revert.
+
+<CardGrid>
+  <LinkCard title="Code Review" href="/practices/code-review/" />
+  <LinkCard title="Security" href="/practices/security/" />
+</CardGrid>
+
+## First Release
+
+Releases are automated through [Release Please](/practices/release-strategy/). You don't manually bump versions or write changelogs — Release Please analyzes your conventional commits and handles it.
+
+Here's how it works: every push to `main` triggers Release Please. It creates (or updates) a Release PR that batches all changes since the last release. When someone merges that Release PR, a GitHub Release is automatically created with a generated changelog.
+
+Version bumps follow semantic versioning based on commit types. A `feat:` commit triggers a minor bump, a `fix:` triggers a patch, and a `BREAKING CHANGE:` footer triggers a major bump. Commits like `docs:` and `chore:` don't trigger a release at all.
+
+Deployment happens automatically when changes merge to `main`. We use blue-green deployments for zero downtime, and preview deployments are created for every PR so changes can be tested in a real environment before merging.
+
+The key practices around deployment — CI/CD pipelines, environment configuration, monitoring with PostHog, structured logging — are covered in the DevOps guide.
+
+<CardGrid>
+  <LinkCard title="Release Strategy" href="/practices/release-strategy/" />
+  <LinkCard title="DevOps & Deployment" href="/practices/devops-deployment/" />
+  <LinkCard title="Database" href="/practices/database/" />
+</CardGrid>
+
+## What's Next
+
+At this point you've shipped a feature, reviewed someone else's code, and understood how releases work. You know the workflow. From here, go deeper into the areas that matter for your day-to-day work:
+
+- **[Reference](/reference/languages/)** — bookmark this. It has every rule from every guide in consolidated checklists you can look up anytime.
+- **[Security](/practices/security/)** — input validation, secrets management, authentication patterns. Read this before building anything that handles user data.
+- **[Database](/practices/database/)** — schema design, migrations, indexing strategy. Read this before designing a data model.
+
+<Aside>
+You don't need to memorize every rule. The reference section exists so you can look things up when you need them. Focus on understanding the patterns and principles — the specifics will become second nature over time.
+</Aside>

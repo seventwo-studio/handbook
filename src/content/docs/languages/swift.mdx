@@ -2,112 +2,309 @@
 title: Swift Coding Standards
 ---
 
+import { Aside } from '@astrojs/starlight/components';
+
 ## Overview
 
-Swift is used for SevenTwo Studio's native iOS development, exclusively with SwiftUI for user interfaces. We target the latest stable Swift version and support iOS versions from latest minus 2 (currently iOS 16+). Our Swift standards emphasize safety, modern concurrency, and protocol-oriented programming.
+Swift is used for SevenTwo Studio's native iOS development, exclusively with SwiftUI for user interfaces. We target **Swift 6.2** and **iOS 18** as the minimum deployment target. Our Swift standards emphasize safety, modern concurrency with strict concurrency checking, protocol-oriented programming, and zero third-party dependencies wherever possible.
 
 ## Optionals and Safety
 
 Swift's optional system is one of its strongest features for preventing null pointer errors. We avoid force unwrapping (`!`) in all cases, as it can cause runtime crashes. Instead, we use optional binding, optional chaining, and guard statements to handle optionals safely.
 
-We prefer `guard let` over `if let` for optional unwrapping when early returns make sense. Guard statements keep the happy path unindented and make the code flow more linear and readable. This pattern also ensures that unwrapped values are available in the same scope after the guard.
+Prefer `guard let` over `if let` when the unwrapped value is needed in the remaining scope — it keeps the happy path unindented and exits early on failure. Use `if let` for short, self-contained checks where the unwrapped value is only needed inside the branch.
+
+```swift
+// guard for early exit — unwrapped value available below
+guard let user = session.currentUser else { return }
+updateProfile(for: user)
+
+// if let for scoped checks
+if let cached = cache[key] {
+    return cached
+}
+```
+
+<Aside type="caution">
+  Treat implicitly unwrapped optionals (`String!`) the same as force unwraps — avoid them outside of `@IBOutlet` (which we don't use with SwiftUI anyway).
+</Aside>
 
 ## Concurrency
 
-We use Swift's modern concurrency features with async/await exclusively. This approach is safer and more readable than completion handlers or combine publishers for asynchronous operations. Swift's actor model provides thread-safe state management without manual locking.
+We use Swift's structured concurrency model exclusively: `async`/`await`, `TaskGroup`, and actors. Completion handlers and Combine publishers are legacy patterns — do not introduce them in new code.
+
+### Actors and Sendable
+
+Use actors to encapsulate mutable shared state. Mark types that cross concurrency boundaries as `Sendable` and enable strict concurrency checking (`-strict-concurrency=complete`) project-wide.
+
+```swift
+actor ImageCache {
+    private var store: [URL: Image] = [:]
+
+    func image(for url: URL) -> Image? {
+        store[url]
+    }
+
+    func set(_ image: Image, for url: URL) {
+        store[url] = image
+    }
+}
+```
+
+Use `@MainActor` for anything that touches UI state — ViewModels, navigation state, and any property read by SwiftUI views.
+
+### Task management
+
+Cancel tasks when they're no longer needed. Prefer `task` view modifier for work tied to a view's lifecycle, and `.task(id:)` when the work should restart when a value changes.
+
+```swift
+struct PhotoView: View {
+    let photoID: String
+
+    var body: some View {
+        content
+            .task(id: photoID) {
+                await loadPhoto(photoID)
+            }
+    }
+}
+```
 
 ## Protocol-Oriented Programming
 
-We extensively use protocols and protocol-oriented programming patterns. Protocols define contracts for types and enable flexible, testable code through dependency injection. Protocol extensions provide default implementations and reduce code duplication.
+Use protocols to define contracts for testability and flexibility. Prefer protocol extensions for shared default behavior over base classes. Keep protocols focused — split large protocols into smaller, composable ones.
+
+```swift
+protocol PhotoLibrary: Sendable {
+    func photos(in album: Album) async throws -> [Photo]
+    func save(_ photo: Photo) async throws
+}
+
+// Default implementation via extension
+extension PhotoLibrary {
+    func firstPhoto(in album: Album) async throws -> Photo? {
+        try await photos(in: album).first
+    }
+}
+```
 
 ## Architecture
 
-We follow the MVVM (Model-View-ViewModel) architecture pattern with SwiftUI. ViewModels manage state and business logic, while Views remain simple and declarative. This separation improves testability and makes the codebase more maintainable.
+We follow **MVVM** with SwiftUI. Views are declarative and contain no business logic. ViewModels are `@Observable` classes annotated with `@MainActor` that own the state and drive the view.
 
-We use property wrappers like `@Environment`, `@EnvironmentObject`, and `@StateObject` for dependency injection and state management. These built-in mechanisms work seamlessly with SwiftUI's reactive update system.
+```swift
+@MainActor
+@Observable
+final class AlbumViewModel {
+    private(set) var albums: [Album] = []
+    private(set) var isLoading = false
+    var error: Error?
+
+    private let library: PhotoLibrary
+
+    init(library: PhotoLibrary) {
+        self.library = library
+    }
+
+    func load() async {
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            albums = try await library.fetchAlbums()
+        } catch {
+            self.error = error
+        }
+    }
+}
+```
+
+<Aside>
+  We use the Observation framework (`@Observable`) instead of the older `ObservableObject` / `@Published` / `@StateObject` / `@ObservedObject` pattern. The Observation framework is more performant (fine-grained tracking) and requires less boilerplate.
+</Aside>
+
+### Dependency injection
+
+Pass dependencies through initializers for ViewModels. For values that need to flow through the view hierarchy without explicit passing, use SwiftUI's `@Environment` with custom `EnvironmentKey` conformances.
+
+```swift
+struct PhotoLibraryKey: EnvironmentKey {
+    static let defaultValue: PhotoLibrary = LivePhotoLibrary()
+}
+
+extension EnvironmentValues {
+    var photoLibrary: PhotoLibrary {
+        get { self[PhotoLibraryKey.self] }
+        set { self[PhotoLibraryKey.self] = newValue }
+    }
+}
+```
+
+## SwiftUI Patterns
+
+### Navigation
+
+Use `NavigationStack` with value-based navigation for type-safe, programmatic control. Keep navigation state in a dedicated model so it can be tested and persisted.
+
+```swift
+@MainActor
+@Observable
+final class Router {
+    var path = NavigationPath()
+
+    func navigate(to destination: Destination) {
+        path.append(destination)
+    }
+
+    func popToRoot() {
+        path = NavigationPath()
+    }
+}
+```
+
+### Sheets and alerts
+
+Drive presentations from optional state or boolean bindings — never call imperative presentation methods.
+
+```swift
+struct AlbumView: View {
+    @State private var selectedPhoto: Photo?
+
+    var body: some View {
+        albumGrid
+            .sheet(item: $selectedPhoto) { photo in
+                PhotoDetailView(photo: photo)
+            }
+    }
+}
+```
+
+### View composition
+
+Extract reusable pieces into smaller views or `ViewModifier` conformances. Keep `body` readable — if it exceeds ~40 lines, split it.
+
+```swift
+struct CardModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding()
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+extension View {
+    func card() -> some View {
+        modifier(CardModifier())
+    }
+}
+```
 
 ## Data Persistence
 
-For local data persistence, we use SwiftData and SQLite. SwiftData provides a modern, Swift-native approach to data modeling with automatic persistence. SQLite serves as a reliable fallback for more complex queries or when direct SQL access is needed.
+### SwiftData
+
+SwiftData is our primary persistence layer. Define models with the `@Model` macro and use `ModelContainer` / `ModelContext` from the environment.
+
+```swift
+@Model
+final class Project {
+    var name: String
+    var createdAt: Date
+    @Relationship(deleteRule: .cascade)
+    var tasks: [ProjectTask] = []
+
+    init(name: String) {
+        self.name = name
+        self.createdAt = .now
+    }
+}
+```
+
+Use `@Query` in views for reactive, filtered, sorted data:
+
+```swift
+struct ProjectListView: View {
+    @Query(sort: \Project.createdAt, order: .reverse)
+    private var projects: [Project]
+
+    var body: some View {
+        List(projects) { project in
+            ProjectRow(project: project)
+        }
+    }
+}
+```
+
+### SQLite (via direct access)
+
+For performance-critical queries, complex joins, or full-text search that SwiftData can't express well, drop down to SQLite directly. Wrap access behind a protocol so the persistence layer stays swappable.
 
 ## Networking
 
-We use the native URLSession for all networking operations. URLSession is robust, well-tested, and provides everything needed for modern HTTP communication without additional dependencies. We leverage async/await with URLSession's modern API for clean, sequential code.
+Use the native `URLSession` for all networking. Combine it with `async`/`await` and `JSONDecoder` for clean request/response flows.
+
+```swift
+struct APIClient {
+    private let session: URLSession
+    private let decoder: JSONDecoder
+
+    func fetch<T: Decodable>(_ request: URLRequest) async throws -> T {
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse,
+              (200..<300).contains(http.statusCode) else {
+            throw APIError.badResponse
+        }
+        return try decoder.decode(T.self, from: data)
+    }
+}
+```
+
+No third-party HTTP libraries — URLSession covers everything we need.
 
 ## Testing
 
-We use Swift Testing (the new framework introduced in Swift 5.9+) for all test scenarios. Tests should cover unit tests, integration tests, and where applicable, UI tests. We maintain high test coverage and follow TDD practices.
+We use **Swift Testing** (`@Test`, `#expect`, `#require`) for all tests. Do not use XCTest for new test code.
+
+```swift
+@Test("Fetching albums returns sorted results")
+func fetchAlbums() async throws {
+    let library = MockPhotoLibrary(albums: [.fixture(name: "B"), .fixture(name: "A")])
+    let vm = AlbumViewModel(library: library)
+    await vm.load()
+    #expect(vm.albums.map(\.name) == ["A", "B"])
+}
+```
+
+Prefer real implementations over mocks. Only mock at hard boundaries — networking, file system, hardware sensors. Use protocol conformances for test doubles rather than mocking frameworks.
+
+For UI testing, use **Maestro** flows to verify critical user journeys.
 
 ## Project Organization
 
-We organize our Xcode projects by feature or module rather than by type. This means grouping related views, view models, and models together instead of having separate folders for all views, all models, etc. This structure improves discoverability and makes features more self-contained.
+Use **Tuist** for project generation and build settings management — no manually edited `.xcodeproj` files. Organize by feature module:
+
+```
+Sources/
+├── App/              # App entry point, root navigation
+├── Features/
+│   ├── Albums/       # View, ViewModel, models for albums
+│   ├── Camera/
+│   └── Settings/
+├── Core/             # Shared utilities, extensions, protocols
+└── Design/           # Reusable UI components, modifiers, theme
+```
+
+Each feature folder groups its view, view model, and models together. Shared code lives in `Core/` or `Design/`.
 
 ## Code Style
 
-We use SwiftLint with the default configuration to enforce code style. The linter runs automatically in our pre-commit hooks and CI pipeline. We use 2-space indentation and follow Swift's standard naming conventions.
+Use **SwiftFormat** to enforce consistent style. It runs in pre-commit hooks and CI. Follow Swift's standard naming conventions:
 
-## Package Management
+- `camelCase` for variables, functions, and parameters
+- `PascalCase` for types, protocols, and enum cases
+- Boolean properties read naturally: `isLoading`, `hasAccess`, `canEdit`
+- Maximum function length: 50 lines — extract if longer
 
-We use Swift Package Manager (SPM) exclusively for dependency management. SPM is native to the Swift toolchain, well-integrated with Xcode, and provides reliable dependency resolution.
-
-## Rules
-
-### Platform and Tooling
-
-1. Target latest stable Swift version
-2. Support minimum iOS version of latest - 2 (currently iOS 16)
-3. Use Swift Package Manager (SPM) exclusively
-4. Use SwiftLint with default configuration
-5. 2-space indentation required
-
-### Optionals and Safety
-
-6. Never use force unwrapping (`!`)
-7. Prefer `guard let` over `if let` for optional unwrapping
-
-### Concurrency
-
-8. Use async/await for all asynchronous operations
-9. Leverage actor model for thread-safe state management
-
-### Architecture and UI
-
-10. Use SwiftUI exclusively for UI development
-11. Follow MVVM architecture pattern strictly
-12. Use `@Environment` and property wrappers for dependency injection
-13. Organize Xcode project by feature/module, not by type
-
-### Protocol-Oriented Programming
-
-14. Use protocols extensively for abstraction and testability
-
-### Data Persistence
-
-15. Use SwiftData for primary data persistence
-16. Use SQLite for complex query requirements
-
-### Networking
-
-17. Use URLSession (native) for all networking
-
-### Testing
-
-18. Use Swift Testing framework for all tests
-19. Minimum 80% code coverage required
-20. Practice Test-Driven Development (TDD) strictly
-21. Tests must cover unit, integration, and UI scenarios where applicable
-
-### Naming Conventions
-
-22. Follow snake_case for variables and functions
-23. Use PascalCase for types and protocols
-24. Use SCREAMING_SNAKE_CASE for constants
-25. Boolean variables should be descriptive without prefixes (active, permitted)
-26. Maximum function length is 50 lines
-
-### Configuration and Documentation
-
-27. Build configurations used for environment management (Debug/Release)
-28. JSDoc-style documentation required for complex functions only
-29. Include parameter and return documentation for documented functions
-30. No TODO/FIXME/HACK comments - use issue tracker
+:::tip[Quick Reference]
+Looking for the rules checklist? See [Swift rules](/reference/languages/#swift).
+:::

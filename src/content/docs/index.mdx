@@ -1,46 +1,64 @@
 ---
 title: SevenTwo Studio Handbook
-description: The complete guide to how we operate as a product studio and build exceptional products.
+description: The complete guide to how we build software at SevenTwo Studio.
 template: splash
 hero:
   title: |
-    SevenTwo Studio Handbook
-  tagline: The complete guide to how we operate as a product studio and build exceptional products.
+    Build software the SevenTwo way
+  tagline: Standards, patterns, and practices for building exceptional products — whether you're learning the craft or looking up a convention.
   actions:
-    - text: View Languages
-      link: /languages/typescript/
+    - text: Start Here
+      link: /start-here/
       icon: right-arrow
       variant: primary
-    - text: View App Types
-      link: /app-types/hono-api/
-      icon: rocket
-      variant: secondary
-    - text: View Practices
-      link: /practices/architecture/
+    - text: Browse Reference
+      link: /reference/languages/
       icon: open-book
-      variant: minimal
+      variant: secondary
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-## About SevenTwo Studio
+## Two Ways to Use This Handbook
 
-We're SevenTwo Studio, a product studio focused on building consumer apps that make life simpler. We also create developer tools—APIs and platforms—that power the next generation of products. Everything we ship gives people new capabilities without the complexity.
+<CardGrid>
+  <Card title="I'm learning" icon="open-book">
+    New to the team or to professional development? Follow the guided path from environment setup through your first PR and beyond.
 
-<CardGrid stagger>
-  <Card title="Engineering" icon="rocket">
-    Developer velocity, pragmatic solutions, and technical excellence. We maintain strict code quality standards, uncompromising git workflows, and balance simple foundations with modern scalability.
+    [Start with Your First Day →](/start-here/first-day/)
   </Card>
 
-  <Card title="Product" icon="star">
-    Design-driven, user-centric approach. We build multiple products simultaneously, ship small frequent releases, and never compromise on UX quality and craft.
+  <Card title="I need a quick answer" icon="magnifier">
+    Already know the codebase and need to look something up? Jump to the consolidated rule checklists.
+
+    [Browse the Reference →](/reference/languages/)
+  </Card>
+</CardGrid>
+
+## What's Inside
+
+<CardGrid>
+  <Card title="Languages" icon="seti:typescript">
+    Coding standards for TypeScript, Swift, Kotlin, and Rust — type safety, testing, naming conventions, and tooling.
+
+    [View Language Guides →](/languages/)
   </Card>
 
-  <Card title="Operations" icon="setting">
-    Lean, agile studio focused on speed. We embrace flexible autonomy, async-first communication, and decentralized decision-making.
+  <Card title="App Types" icon="rocket">
+    Architecture patterns for Expo, Hono, Astro, TanStack, iOS, and Android — from project setup to deployment.
+
+    [View App Type Guides →](/app-types/)
   </Card>
 
-  <Card title="Values" icon="heart">
-    Design-driven, user-centric, quality-obsessed, fast, and technically excellent. We never ship something we're not proud of.
+  <Card title="Practices" icon="setting">
+    Engineering practices that apply everywhere — version control, code review, security, databases, and DevOps.
+
+    [View Practice Guides →](/practices/)
+  </Card>
+
+  <Card title="Reference" icon="list-format">
+    Every rule from every guide, consolidated into searchable checklists organized by topic.
+
+    [View Reference →](/reference/languages/)
   </Card>
 </CardGrid>

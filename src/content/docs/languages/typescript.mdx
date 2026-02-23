@@ -66,63 +66,6 @@ We use Biome as our primary formatter and linter, with Prettier as a fallback fo
 
 We always use semicolons in TypeScript code. The formatter decides quote style and trailing comma preferences to maintain consistency without bikeshedding.
 
-## Rules
-
-### Type Safety
-
-1. TypeScript must be used in strict mode with all strict flags enabled
-2. The `any` type is never allowed without explicit justification in code review
-3. Non-null assertions (`!`) are never allowed
-4. Use `interface` for object types and `type` for unions and complex compositions
-5. Use `as const` assertions for literal types
-6. Use TypeScript enums for fixed sets of related constants
-7. Minimize type casting - solve type issues upstream instead
-
-### Function Declarations
-
-8. Use arrow functions for callbacks, traditional declarations for named top-level functions
-9. Maximum function length is 50 lines
-
-### Testing
-
-10. All new code must have unit tests with minimum 80% coverage
-11. Tests must be placed in `/tests` directory with `*.test.ts` naming
-12. Follow Arrange-Act-Assert (AAA) pattern in all tests
-13. Practice Test-Driven Development (TDD) strictly
-
-### Error Handling
-
-14. Use try-catch with custom error classes for error handling
-15. Use async/await with try-catch for async error handling
-16. Generic error messages for users, detailed logging for debugging
-
-### Module Organization
-
-17. Organize imports using auto-sorting tools
-18. Use `@/` path aliases for imports
-19. Barrel files only for public APIs
-
-### Code Style
-
-20. Use Biome for formatting and linting
-21. 2-space indentation required
-22. 120-character line limit
-23. Always use semicolons
-24. No use of biome-ignore comments to bypass linting issues
-
-### Naming Conventions
-
-25. Minimum variable names must be descriptive (no single-letter except loop indices)
-26. Use snake_case for variables and functions
-27. Use SCREAMING_SNAKE_CASE for constants
-28. Use PascalCase for React components
-29. Use Type suffix for types (UserType)
-30. Use Props suffix for component props
-31. Boolean variables should be descriptive without prefixes (active, permitted)
-
-### Documentation
-
-32. JSDoc required for complex functions only
-33. Include @param and @returns in JSDoc documentation
-34. Inline comments encouraged for complex logic only
-35. No TODO/FIXME/HACK comments - use issue tracker
+:::tip[Quick Reference]
+Looking for the rules checklist? See [TypeScript rules](/reference/languages/#typescript).
+:::

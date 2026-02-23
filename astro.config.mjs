@@ -28,24 +28,43 @@ export default defineConfig({
 			],
 			sidebar: [
 				{
+					label: "Start Here",
+					items: [
+						{ label: "Welcome", slug: "start-here" },
+						{
+							label: "Learning Path",
+							slug: "start-here/first-day",
+							badge: "New",
+						},
+						{
+							label: "Pick Your Stack",
+							slug: "start-here/pick-your-stack",
+							badge: "New",
+						},
+					],
+				},
+				{
 					label: "Languages",
+					collapsed: true,
 					items: [
 						{ label: "Overview", slug: "languages" },
 						{ label: "TypeScript", slug: "languages/typescript" },
 						{ label: "Swift", slug: "languages/swift" },
 						{ label: "Kotlin", slug: "languages/kotlin" },
-						{ label: "Python", slug: "languages/python" },
-						{ label: "Go", slug: "languages/go" },
 						{ label: "Rust", slug: "languages/rust" },
 					],
 				},
 				{
 					label: "App Types",
+					collapsed: true,
 					items: [
 						{ label: "Overview", slug: "app-types" },
 						{ label: "Expo App", slug: "app-types/expo-app" },
 						{ label: "Hono API", slug: "app-types/hono-api" },
-						{ label: "Astro Website", slug: "app-types/astro-website" },
+						{
+							label: "Astro Website",
+							slug: "app-types/astro-website",
+						},
 						{
 							label: "TanStack Dashboard",
 							slug: "app-types/tanstack-dashboard",
@@ -58,19 +77,25 @@ export default defineConfig({
 							label: "Native Android (Kotlin + Compose)",
 							slug: "app-types/native-android-kotlin-compose",
 						},
-						{ label: "Flutter App", slug: "app-types/flutter-app" },
 					],
 				},
 				{
 					label: "Practices",
+					collapsed: true,
 					items: [
 						{ label: "Overview", slug: "practices" },
 						{
 							label: "Architecture & Design Patterns",
 							slug: "practices/architecture",
 						},
-						{ label: "Version Control", slug: "practices/version-control" },
-						{ label: "Code Review", slug: "practices/code-review" },
+						{
+							label: "Version Control",
+							slug: "practices/version-control",
+						},
+						{
+							label: "Code Review",
+							slug: "practices/code-review",
+						},
 						{ label: "Security", slug: "practices/security" },
 						{ label: "Database", slug: "practices/database" },
 						{
@@ -80,6 +105,26 @@ export default defineConfig({
 						{
 							label: "Release Strategy",
 							slug: "practices/release-strategy",
+						},
+					],
+				},
+				{
+					label: "Reference",
+					items: [
+						{
+							label: "Language Rules",
+							slug: "reference/languages",
+							badge: "New",
+						},
+						{
+							label: "App Type Rules",
+							slug: "reference/app-types",
+							badge: "New",
+						},
+						{
+							label: "Practice Rules",
+							slug: "reference/practices",
+							badge: "New",
 						},
 					],
 				},

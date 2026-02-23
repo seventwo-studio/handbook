@@ -1,0 +1,149 @@
+---
+title: Pick Your Stack
+description: Answer a few questions to find which technologies and guides apply to what you're building.
+---
+
+import { CardGrid, LinkCard, Aside } from '@astrojs/starlight/components';
+
+Not sure where to start? Answer the questions below — expand the option that matches what you're building, and we'll point you to the right guides.
+
+## What are you building?
+
+<details>
+<summary>**A mobile app**</summary>
+
+### Do you need both iOS and Android?
+
+<details>
+<summary>**Yes — ship to both platforms from one codebase**</summary>
+
+#### Your stack: Expo
+
+Expo with React Native lets you build for iOS, Android, and web from a single TypeScript codebase. It handles navigation (Expo Router), styling (NativeWind), state management (Zustand + TanStack Query), and deployment (EAS Build).
+
+This is the default choice for mobile apps unless you need deep native access to platform-specific APIs that Expo doesn't cover.
+
+<CardGrid>
+  <LinkCard title="Expo App Guide" href="/app-types/expo-app/" />
+  <LinkCard title="TypeScript Standards" href="/languages/typescript/" />
+</CardGrid>
+
+</details>
+
+<details>
+<summary>**iOS only — building exclusively for Apple platforms**</summary>
+
+#### Your stack: Native iOS (SwiftUI)
+
+Swift with SwiftUI gives you full access to Apple's platform APIs — Metal, ARKit, HealthKit, widgets, and everything else. We use MVVM with `@Observable`, SwiftData for persistence, and Tuist for project generation.
+
+Choose this when you need native performance, deep system integration, or are building an app that only makes sense on Apple platforms.
+
+<CardGrid>
+  <LinkCard title="Native iOS Guide" href="/app-types/native-ios-swiftui/" />
+  <LinkCard title="Swift Standards" href="/languages/swift/" />
+</CardGrid>
+
+</details>
+
+<details>
+<summary>**Android only — building exclusively for Android**</summary>
+
+#### Your stack: Native Android (Kotlin + Compose)
+
+Kotlin with Jetpack Compose, Hilt for dependency injection, Room for persistence, and Navigation Compose for routing. We follow MVVM with Android's ViewModel and use Material Design 3.
+
+Choose this when you need native Android performance, deep platform integration, or are building something Android-specific.
+
+<CardGrid>
+  <LinkCard title="Native Android Guide" href="/app-types/native-android-kotlin-compose/" />
+  <LinkCard title="Kotlin Standards" href="/languages/kotlin/" />
+</CardGrid>
+
+</details>
+
+</details>
+
+<details>
+<summary>**A web application**</summary>
+
+### What kind of web application?
+
+<details>
+<summary>**Content-focused — blog, docs, marketing, or landing pages**</summary>
+
+#### Your stack: Astro
+
+Astro's islands architecture ships zero JavaScript by default and hydrates interactive components only where needed. It's ideal for content-heavy sites where performance and SEO matter most. We use Tailwind for styling, MDX for rich content, and React for interactive islands.
+
+<CardGrid>
+  <LinkCard title="Astro Website Guide" href="/app-types/astro-website/" />
+  <LinkCard title="TypeScript Standards" href="/languages/typescript/" />
+</CardGrid>
+
+</details>
+
+<details>
+<summary>**Data-heavy — dashboard, admin panel, or internal tool**</summary>
+
+#### Your stack: TanStack (Router + Query + Table)
+
+React with TanStack Router for type-safe routing, TanStack Query for server state, and TanStack Table for data grids. Add Zustand for client state, React Hook Form + Zod for forms, and shadcn/ui for components. Built with Vite.
+
+This stack is optimized for applications that display, filter, and manipulate large amounts of data with real-time updates.
+
+<CardGrid>
+  <LinkCard title="TanStack Dashboard Guide" href="/app-types/tanstack-dashboard/" />
+  <LinkCard title="TypeScript Standards" href="/languages/typescript/" />
+</CardGrid>
+
+</details>
+
+</details>
+
+<details>
+<summary>**A backend API**</summary>
+
+#### Your stack: Hono
+
+Hono is lightweight, fast, and runs on Bun, Cloudflare Workers, and Node.js. We use it for both REST and tRPC APIs with Zod for validation, Drizzle ORM for database access, and OpenAPI for documentation.
+
+Whether you're building a standalone service, a webhook handler, or the backend for a mobile app — Hono is the starting point.
+
+<CardGrid>
+  <LinkCard title="Hono API Guide" href="/app-types/hono-api/" />
+  <LinkCard title="TypeScript Standards" href="/languages/typescript/" />
+  <LinkCard title="Database Standards" href="/practices/database/" />
+</CardGrid>
+
+</details>
+
+<details>
+<summary>**A CLI tool or systems software**</summary>
+
+#### Your stack: Rust
+
+Rust for anything that needs to be fast, memory-safe, and distributed as a single binary. We use Tokio for async, Axum for web services, SQLx for database access, and serde for serialization.
+
+Choose Rust for command-line tools, performance-critical services, or anything where you'd otherwise reach for Go or C++.
+
+<CardGrid>
+  <LinkCard title="Rust Standards" href="/languages/rust/" />
+</CardGrid>
+
+</details>
+
+## Every project also needs
+
+No matter what stack you chose above, these practices apply to all code at SevenTwo Studio:
+
+<CardGrid>
+  <LinkCard title="Version Control" description="Git workflow, branch conventions, and commit messages." href="/practices/version-control/" />
+  <LinkCard title="Code Review" description="PR process, review standards, and constructive feedback." href="/practices/code-review/" />
+  <LinkCard title="Security" description="Input validation, secrets management, and authentication." href="/practices/security/" />
+  <LinkCard title="DevOps & Deployment" description="CI/CD pipelines, hosting, monitoring, and logging." href="/practices/devops-deployment/" />
+</CardGrid>
+
+<Aside>
+Already know your stack? Head back to the [Learning Path](/start-here/first-day/) to continue from where you left off.
+</Aside>

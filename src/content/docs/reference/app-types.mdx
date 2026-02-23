@@ -1,0 +1,544 @@
+---
+title: App Type Rules
+description: Quick-reference rules for all application types built at SevenTwo Studio.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Quick-reference checklist for app-type-specific rules. Each section links to the full guide with explanations and code examples.
+
+## Expo App
+
+<Aside>
+Full guide: [Expo App Standards](/app-types/expo-app/)
+</Aside>
+
+### Framework and Platform
+
+1. Use Expo as preferred framework for cross-platform mobile development
+2. Support iOS, Android, and web from single codebase
+
+### Navigation
+
+3. Use Expo Router for navigation and routing
+4. Leverage file-based routing structure
+5. Support deep linking and type-safe navigation
+
+### Components and Hooks
+
+6. Use functional components and hooks exclusively
+7. Use custom hooks for reusable logic
+8. Follow React best practices and hooks rules
+
+### State Management
+
+9. Use Zustand for global state management
+10. Use React Query (TanStack Query) for server state and data fetching
+11. Separate client state (Zustand) from server state (React Query)
+
+### Styling
+
+12. Use Tailwind CSS through NativeWind for styling
+13. Use custom components or shadcn/ui adapted for React Native
+
+### Platform-Specific Code
+
+14. Use Platform.select() for platform-specific values
+15. Use conditional imports for platform-specific implementations
+16. Minimize platform-specific code - prefer Expo cross-platform APIs
+17. Encapsulate platform differences in dedicated modules
+
+### Native Functionality
+
+18. Use Expo modules for native functionality
+19. Use config plugins for native build customization
+
+### Forms
+
+20. Use React Hook Form for form handling
+21. Integrate Zod with React Hook Form for validation
+22. Validate forms on submission with clear error messages
+
+### Data Fetching
+
+23. Use React Query for all server data fetching
+24. Leverage automatic caching and background refetching
+25. Type API calls with TypeScript and validate with Zod
+26. Use tRPC for end-to-end type safety when possible
+
+### Offline Support
+
+27. Implement offline-first with SQLite and background sync
+28. Use React Query persistence for cache across restarts
+
+### Testing
+
+29. Use Jest for unit and integration tests
+30. Use Playwright for end-to-end tests
+31. Use snapshot tests for component verification
+32. Use visual regression tests for UI changes
+33. Minimum 80% code coverage required
+34. Practice Test-Driven Development (TDD) strictly
+35. Tests required for all new features and bug fixes
+
+### Performance
+
+36. Use useMemo and useCallback for memoization
+37. Use component lazy loading for code splitting
+38. Use FlashList instead of FlatList for large lists
+39. Optimize images through Expo image optimization and CDN
+40. Use expo-image for advanced image features
+41. Follow Expo best practices for performance and user experience
+
+### Updates and Deployment
+
+42. Use Expo OTA updates for rapid deployments
+43. Target OTA updates to specific user segments
+44. Download non-critical updates in background
+45. Use EAS Build for iOS and Android builds
+46. Use EAS Submit for app store submissions
+47. Create preview builds for pull requests
+
+## Hono API
+
+<Aside>
+Full guide: [Hono API Standards](/app-types/hono-api/)
+</Aside>
+
+### Framework and API Style
+
+1. Use Hono as the backend framework for all APIs
+2. Support both REST and tRPC API styles
+3. All routes and handlers must be fully typed with TypeScript
+
+### Validation
+
+4. Use Zod for all input validation
+5. Validate request bodies, query parameters, and path parameters
+6. Return 422 status code for validation errors with clear field-level messages
+
+### Documentation
+
+7. Use OpenAPI/Swagger for REST API documentation
+8. Auto-generate documentation from route definitions and schemas
+
+### Error Handling
+
+9. Use custom error classes that map to HTTP status codes
+10. Standardize error response structure across all endpoints
+11. Include stack traces in development, sanitize in production
+12. Generic error messages for users, detailed logs for developers
+13. Log all errors with sufficient context for debugging
+
+### Versioning
+
+14. Version APIs using URL path format (/v1/resource)
+15. Maintain backward compatibility within major versions
+
+### Middleware
+
+16. Handle rate limiting at CDN/Cloudflare level
+17. Use Hono middleware for authentication, logging, and error handling
+18. Validate JWTs or session tokens in authentication middleware
+19. Track request timing and errors in logging middleware
+
+### Database
+
+20. Use Drizzle ORM for database access
+21. Execute database queries in service layer, not route handlers
+
+### Testing
+
+22. Write unit tests for business logic
+23. Write integration tests for route handlers
+24. Write end-to-end tests for complete request flows
+25. Test both success and failure cases comprehensively
+26. Verify status codes, response bodies, and error handling in tests
+
+### Deployment
+
+27. Deploy to Railway, GCP, Cloudflare Workers, or appropriate platform
+28. Use environment variables for configuration
+29. Use feature flags for gradual rollouts
+
+### REST Conventions
+
+30. Follow REST conventions: GET for retrieval, POST for creation, PUT/PATCH for updates, DELETE for removal
+31. Use full HTTP status code range (400, 401, 403, 404, 422, 500)
+32. RESTful endpoints use kebab-case (/user-profile)
+33. Return structured JSON responses
+34. Support pagination for list endpoints
+35. Include request IDs in responses for tracing
+
+## Astro Website
+
+<Aside>
+Full guide: [Astro Website Standards](/app-types/astro-website/)
+</Aside>
+
+### Framework and Architecture
+
+1. Use Astro for content-focused websites, marketing pages, and documentation
+2. Leverage islands architecture for minimal JavaScript delivery
+3. Ship zero JavaScript by default, interactive islands only where needed
+4. Use client:visible or client:idle for delayed hydration
+5. Prefer delayed hydration over immediate (client:load)
+
+### Components
+
+6. Use React for interactive components within Astro
+7. Use .astro files for static layout and content
+8. Keep components small and focused
+9. Clear boundaries between static and interactive content
+
+### Styling
+
+10. Use Tailwind CSS for styling
+11. Use shadcn/ui or custom components for component library
+
+### Content Management
+
+12. Use Astro content collections for markdown and MDX content
+13. Define content schemas with Zod for type safety
+14. Use MDX for rich, interactive content
+
+### Routing
+
+15. Use file-based routing in src/pages directory
+16. Use bracket notation for dynamic routes ([slug].astro)
+17. Define API routes in src/pages/api
+18. API routes return JSON or other response types
+
+### Images
+
+19. Use Astro's Image component for image optimization
+20. Automatically optimize images in WebP and AVIF formats
+21. Store images in public directory or import in components
+
+### SEO
+
+22. Implement comprehensive SEO with metadata and structured data
+23. Generate sitemaps automatically
+24. Use Open Graph and Twitter Card metadata
+25. Add structured data (JSON-LD) for rich search results
+
+### Performance
+
+26. Track Core Web Vitals (LCP, FID, CLS)
+27. Monitor bundle size in CI
+28. Use bundle analysis to eliminate unnecessary dependencies
+29. Lazy load images and heavy content
+30. Track Core Web Vitals with real user monitoring
+31. Use PostHog or similar for performance insights
+
+### Internationalization
+
+32. Use react-i18next or Astro i18n for internationalization
+33. Support multiple languages through content collections
+34. Organize routes by locale for multi-language sites
+
+### Deployment
+
+35. Build as static sites or server-rendered based on requirements
+36. Deploy static sites to Cloudflare Pages or Railway
+37. Deploy SSR sites to Node.js or edge runtime platforms
+38. Create preview deployments for pull requests
+
+### Testing
+
+39. Use Playwright for end-to-end testing
+40. Use visual regression testing for UI changes
+41. Use Jest or Vitest for component testing
+42. Test interactive islands independently
+43. Tests required for critical user flows
+44. Minimum 80% coverage for interactive components
+
+### Accessibility
+
+45. Ensure WCAG 2.1 AA compliance
+46. Use semantic HTML and ARIA labels
+47. Support keyboard navigation for interactive components
+
+## TanStack Dashboard
+
+<Aside>
+Full guide: [TanStack Dashboard Standards](/app-types/tanstack-dashboard/)
+</Aside>
+
+### Routing
+
+1. Use TanStack Router for type-safe routing
+2. Use file-based routing with full TypeScript support
+3. Type-safe navigation and search param schemas
+4. Integrate TanStack Query for route-level data loading
+5. Declare data dependencies at route level
+
+### Data Fetching
+
+6. Use TanStack Query for all server state management
+7. Leverage automatic caching, refetching, and deduplication
+8. Define queries with descriptive keys for cache invalidation
+9. Trigger query invalidations after mutations
+10. Use optimistic updates for immediate user feedback
+
+### Tables
+
+11. Use TanStack Table for all data tables
+12. Build custom table UIs with TanStack Table hooks and Tailwind
+13. Enable sorting, filtering, pagination, column visibility, row selection
+14. Use virtualization for large datasets
+15. Fully type tables with TypeScript
+
+### Framework and State
+
+16. Use React with functional components and hooks exclusively
+17. Use Vite for client-only dashboards, Next.js when SSR needed
+18. Use Zustand for client state
+19. Use TanStack Query exclusively for server state
+20. Maintain clear separation between client and server state
+
+### Forms
+
+21. Use React Hook Form for form handling
+22. Use Zod for form validation
+23. Validate on submission with field-level errors
+24. Integrate forms with TanStack Query for server validation
+
+### UI Components and Styling
+
+25. Use shadcn/ui for UI components
+26. Components are accessible and built with Radix UI
+27. Use Tailwind CSS for styling
+28. Define custom design tokens in Tailwind config
+
+### Authentication
+
+29. Implement authentication with JWT, sessions, or OAuth 2.0
+30. Protect routes through TanStack Router guards
+31. Redirect unauthenticated users to login
+
+### Real-Time Updates
+
+32. Implement real-time updates through WebSockets or SSE
+33. Trigger query invalidations for real-time events
+34. Use optimistic updates or local state for frequent updates
+
+### Data Visualization
+
+35. Use Recharts or Chart.js for data visualization
+36. Ensure visualizations are responsive and accessible
+
+### Performance
+
+37. Optimize with code splitting and lazy loading
+38. Use virtualization for large lists and tables
+39. Use useMemo and useCallback for memoization
+40. Leverage TanStack Query's automatic caching
+41. Use stale-while-revalidate patterns for instant UI updates
+
+### Testing
+
+42. Use Jest for unit and integration tests
+43. Use Playwright for end-to-end tests
+44. Use Testing Library for component tests
+45. Minimum 80% code coverage required
+46. Practice Test-Driven Development (TDD) strictly
+47. Test data fetching, table interactions, forms, and user flows
+48. Tests required for all new features and bug fixes
+
+### Error Handling
+
+49. Implement error boundaries at route level
+50. Provide user-friendly error states with recovery options
+
+### Deployment
+
+51. Deploy to Railway, Cloudflare, or Node.js platforms
+52. Use environment variables for configuration
+53. Use feature flags for gradual rollouts
+54. Create preview deployments for pull requests
+
+## Native iOS (SwiftUI)
+
+<Aside>
+Full guide: [Native iOS (SwiftUI) Standards](/app-types/native-ios-swiftui/)
+</Aside>
+
+### UI Framework
+
+1. Use SwiftUI exclusively for all UI development
+2. No UIKit except when SwiftUI lacks needed functionality
+3. Wrap UIKit components in UIViewRepresentable/UIViewControllerRepresentable
+
+### Architecture
+
+4. Follow MVVM architecture exclusively
+5. ViewModels must be ObservableObject classes
+6. ViewModels must not reference views or contain SwiftUI code
+7. Views observe ViewModels and update reactively
+
+### State Management
+
+8. Use @State, @StateObject, @ObservedObject, @EnvironmentObject for state management
+9. State flows down, actions flow up
+10. Use Environment for dependency injection
+11. Use shared ViewModels for complex cross-screen state
+
+### Data Persistence
+
+12. Use SwiftData for primary data persistence
+13. Use SQLite for complex queries when beneficial
+14. Prefer value types (structs) for data models
+15. Use classes only for entities requiring identity/reference semantics
+
+### Networking
+
+16. Use URLSession exclusively for networking
+17. Use async/await API for network operations
+18. Wrap URLSession in service layer functions
+19. Decode responses using Codable
+20. Validate responses and handle errors gracefully
+
+### Dependency Injection
+
+21. Use @Environment and @EnvironmentObject for dependency injection
+22. Define protocols for dependencies to enable testing
+23. Inject different implementations for tests versus production
+
+### Navigation
+
+24. Use NavigationStack and NavigationLink for navigation
+25. Use NavigationPath for programmatic navigation
+26. Manage navigation state in ViewModels when needed
+27. Prefer flat navigation over deep hierarchies
+
+### Accessibility
+
+28. Ensure WCAG 2.1 AA compliance for all UIs
+29. Add accessibility labels, hints, and traits where needed
+30. Test with VoiceOver regularly
+31. Support Dynamic Type throughout app
+32. Ensure layouts adapt to different text sizes
+
+### Testing
+
+33. Use Swift Testing framework for all tests
+34. Write unit tests for ViewModels and business logic
+35. Write integration tests for services
+36. Write UI tests for critical user flows
+37. Test ViewModels without UI dependencies
+38. Minimum 80% code coverage required
+39. Practice Test-Driven Development (TDD) strictly
+
+### Performance
+
+40. Optimize with lazy loading, image caching, efficient list rendering
+41. Use LazyVStack and LazyHStack for deferred view creation
+42. Profile regularly with Instruments
+
+### Platform Integration
+
+43. Integrate with iOS platform features (widgets, notifications, shortcuts, ShareSheet)
+
+### Version Requirements
+
+44. Target latest stable Swift version
+45. Support iOS latest - 2 (currently iOS 16+)
+
+## Native Android (Kotlin + Compose)
+
+<Aside>
+Full guide: [Native Android (Kotlin + Compose) Standards](/app-types/native-android-kotlin-compose/)
+</Aside>
+
+### UI Framework
+
+1. Use Jetpack Compose exclusively for all UI development
+2. No XML layouts - use Compose for all UI
+3. Use AndroidView for View-based component interoperability when necessary
+
+### Architecture
+
+4. Follow MVVM architecture with Android ViewModel
+5. ViewModels must survive configuration changes
+6. ViewModels expose state as StateFlow or observable types
+7. ViewModels must not hold references to contexts, views, or lifecycle components
+
+### State Management
+
+8. Use remember, rememberSaveable, and state hoisting for state management
+9. Lift state to appropriate level in composable hierarchy
+10. Use ViewModel state for persistent data, local state for ephemeral UI state
+11. Implement unidirectional data flow (state down, events up)
+
+### Dependency Injection
+
+12. Use Hilt for dependency injection
+13. Inject dependencies through constructors
+14. Define Hilt modules for dependency creation and scoping
+
+### Data Persistence
+
+15. Use Room Database for structured data persistence
+16. Use DataStore for key-value storage and preferences
+17. Room entities must be data classes with annotations
+18. Use DAOs to abstract database operations
+
+### Networking
+
+19. Use Ktor Client for new networking code
+20. Retrofit allowed for existing integrations
+21. Handle responses with kotlinx.serialization or Gson
+22. Use sealed classes for success/failure states
+
+### Navigation
+
+23. Use Navigation Compose for navigation
+24. Provide type-safe navigation arguments
+25. Support deep linking
+26. Centralize navigation logic in handlers or ViewModels
+
+### Material Design
+
+27. Follow Material Design 3 guidelines
+28. Customize MaterialTheme for brand requirements
+29. Support dynamic color on Android 12+
+30. Support light and dark themes comprehensively
+
+### Concurrency
+
+31. Use Kotlin Coroutines for all async operations
+32. Launch coroutines in viewModelScope or lifecycleScope
+33. Use Flow for reactive data streams
+34. Use StateFlow for persistent state, SharedFlow for events
+
+### Testing
+
+35. Use JUnit 5 for unit tests
+36. Use Espresso for traditional UI tests
+37. Use Compose UI Testing for Compose-specific tests
+38. Minimum 80% code coverage required
+39. Practice Test-Driven Development (TDD) strictly
+40. Tests required for all new features and bug fixes
+
+### Build Configuration
+
+41. Use Gradle with Kotlin DSL for build configuration
+42. Use Gradle version catalogs for dependency management
+43. Use build types and product flavors for environment configuration
+
+### Performance
+
+44. Optimize with lazy composition and efficient state management
+45. Use LazyColumn and LazyRow for lists
+46. Use derivedStateOf for optimized state calculations
+47. Profile regularly with Android Studio Profiler
+
+### Platform Integration
+
+48. Integrate with Android platform features (widgets, notifications, work manager)
+
+### Version Requirements
+
+49. Target latest stable Kotlin version
+50. Support minimum Android API 31 (Android 12)

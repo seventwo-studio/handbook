@@ -2,122 +2,298 @@
 title: Kotlin Coding Standards
 ---
 
+import { Aside } from '@astrojs/starlight/components';
+
 ## Overview
 
-Kotlin is used for SevenTwo Studio's native Android development with Jetpack Compose for UI. We target the latest stable Kotlin version and support a minimum Android API level of 31 (Android 12). Our Kotlin standards emphasize null safety, coroutines for concurrency, and modern Android development practices.
+Kotlin is used for SevenTwo Studio's native Android development with Jetpack Compose for UI. We target the **latest stable Kotlin version** and support a **minimum Android API level of 31 (Android 12)**. Our Kotlin standards emphasize null safety, structured concurrency with coroutines, and modern Android development practices.
+
+<Aside type="caution">
+  We do not use Kotlin Multiplatform (KMP). For cross-platform needs, use Expo instead.
+</Aside>
 
 ## Null Safety
 
-Kotlin's null safety is a core feature that prevents null pointer exceptions at compile time. We never use force unwrapping (`!!`) as it bypasses this safety mechanism and can cause crashes. Instead, we prefer safe calls (`?.`), the elvis operator (`?:`), and proper null checking.
+Kotlin's type system distinguishes nullable (`String?`) from non-nullable (`String`) types at compile time. We never use the not-null assertion operator (`!!`) — it defeats the purpose of the type system and can crash at runtime.
 
-Safe calls allow us to chain operations on nullable values without risk of crashes. The elvis operator provides elegant fallback values for null cases. When we need to work with nullable values, we use `let`, `also`, or other scope functions to handle them safely.
+### Safe calls and elvis
+
+Use safe calls (`?.`) to chain operations on nullable values, and the elvis operator (`?:`) to provide fallback values or early returns.
+
+```kotlin
+// Safe call + elvis for fallback
+val displayName = user?.profile?.name ?: "Anonymous"
+
+// Elvis with return for early exit (like guard let in Swift)
+val user = repository.findUser(id) ?: return Result.failure(UserNotFound)
+```
+
+### Scope functions for nullables
+
+Use `let` to execute a block only when a value is non-null. Prefer `let` over manual null checks when you need the value in a scoped block.
+
+```kotlin
+// Good — scoped transformation
+session.currentUser?.let { user ->
+    analytics.track(Event.Login(user.id))
+}
+
+// Avoid — unnecessary let for simple access
+// Bad: user?.let { it.name }
+// Good: user?.name
+```
+
+### Platform types
+
+When calling Java code, Kotlin infers platform types (`String!`) that bypass null safety. Always add explicit nullability annotations (`@NonNull`, `@Nullable`) in Java interop boundaries, or assign platform types to explicitly typed Kotlin variables immediately.
 
 ## Coroutines and Concurrency
 
-We use Kotlin Coroutines with Flow for all asynchronous operations. Coroutines provide structured concurrency that's easier to reason about than callbacks or threads. Flow offers reactive streams that integrate seamlessly with Compose's state management.
+We use Kotlin Coroutines with Flow for all asynchronous operations. No callbacks, no RxJava — coroutines provide structured concurrency that's easier to reason about and automatically handles cancellation.
 
-Coroutines are launched in appropriate scopes (`viewModelScope`, `lifecycleScope`) to ensure they're automatically cancelled when no longer needed. This prevents memory leaks and unnecessary background work.
+### Coroutine scopes
+
+Always launch coroutines in lifecycle-aware scopes so they're cancelled when no longer needed:
+
+- **`viewModelScope`** — for work tied to a ViewModel's lifecycle (most common)
+- **`lifecycleScope`** — for work tied to an Activity or Fragment lifecycle
+- **`rememberCoroutineScope()`** — for work launched from composables in response to events
+
+Never use `GlobalScope` — it leaks coroutines and ignores structured concurrency.
+
+```kotlin
+class AlbumViewModel @Inject constructor(
+    private val repository: AlbumRepository,
+) : ViewModel() {
+
+    private val _albums = MutableStateFlow<List<Album>>(emptyList())
+    val albums: StateFlow<List<Album>> = _albums.asStateFlow()
+
+    fun load() {
+        viewModelScope.launch {
+            _albums.value = repository.getAlbums()
+        }
+    }
+}
+```
+
+### Flow
+
+Use `Flow` for reactive streams of data. Prefer `StateFlow` for state that composables observe, and `SharedFlow` for one-shot events (navigation, snackbars).
+
+```kotlin
+// Repository exposes a Flow of data
+class AlbumRepository(private val dao: AlbumDao) {
+    fun observeAlbums(): Flow<List<Album>> = dao.observeAll()
+}
+
+// ViewModel converts to StateFlow for Compose
+val albums: StateFlow<List<Album>> = repository.observeAlbums()
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+```
+
+<Aside>
+  Use `SharingStarted.WhileSubscribed(5000)` for StateFlows in ViewModels — it keeps the flow active for 5 seconds after the last subscriber disappears, surviving configuration changes without restarting the upstream.
+</Aside>
+
+### Exception handling
+
+Use `try`/`catch` inside coroutines or install a `CoroutineExceptionHandler` at the scope level. Never let exceptions silently swallow — propagate them as state.
+
+```kotlin
+fun load() {
+    viewModelScope.launch {
+        _uiState.value = UiState.Loading
+        _uiState.value = try {
+            UiState.Success(repository.getAlbums())
+        } catch (e: IOException) {
+            UiState.Error(e.message ?: "Network error")
+        }
+    }
+}
+```
 
 ## Architecture
 
-We follow the MVVM (Model-View-ViewModel) architecture pattern with Android's ViewModel component. ViewModels survive configuration changes and provide a clean separation between UI and business logic. This pattern is the recommended approach for modern Android development.
+We follow **MVVM** with Android's `ViewModel` component. ViewModels survive configuration changes and expose state as `StateFlow` that Compose observes reactively.
+
+### ViewModel rules
+
+- ViewModels must not hold references to `Context`, views, or other lifecycle-aware components — this causes memory leaks
+- Expose immutable `StateFlow` (not mutable) to the UI
+- Accept user actions as function calls, not by exposing mutable state
+
+### UI state modeling
+
+Use sealed classes or sealed interfaces to model screen state explicitly:
+
+```kotlin
+sealed interface AlbumUiState {
+    data object Loading : AlbumUiState
+    data class Success(val albums: List<Album>) : AlbumUiState
+    data class Error(val message: String) : AlbumUiState
+}
+```
 
 ## Dependency Injection
 
-We use Hilt for dependency injection throughout the application. Hilt provides compile-time verification of dependencies, automatic lifecycle management, and integrates seamlessly with Android components. This reduces boilerplate and makes testing easier through constructor injection.
+We use **Hilt** for dependency injection. Hilt provides compile-time verification, automatic lifecycle management, and integrates with ViewModels, Activities, and Services.
+
+```kotlin
+@HiltViewModel
+class AlbumViewModel @Inject constructor(
+    private val repository: AlbumRepository,
+) : ViewModel()
+
+@Module
+@InstallIn(SingletonComponent::class)
+object DataModule {
+    @Provides
+    @Singleton
+    fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
+        Room.databaseBuilder(context, AppDatabase::class.java, "app.db").build()
+}
+```
+
+Inject through constructors — keep dependencies explicit and testable.
 
 ## UI Development
 
-We use Jetpack Compose exclusively for UI development. Compose provides a declarative, reactive approach to building UIs that's more concise and maintainable than XML layouts. We follow Compose's state management patterns with `remember`, `rememberSaveable`, and state hoisting.
+Jetpack Compose exclusively — no XML layouts. We follow Compose's state management patterns with `remember`, `rememberSaveable`, and state hoisting.
+
+### State hoisting
+
+State flows down, events flow up. Composables that own state are stateful; composables that receive state as parameters are stateless and reusable.
+
+```kotlin
+// Stateless — receives state, emits events
+@Composable
+fun SearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TextField(value = query, onValueChange = onQueryChange, modifier = modifier)
+}
+
+// Stateful — owns the state
+@Composable
+fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    SearchBar(query = uiState.query, onQueryChange = viewModel::updateQuery)
+}
+```
+
+<Aside>
+  Always use `collectAsStateWithLifecycle()` instead of `collectAsState()` — it stops collecting when the lifecycle is below `STARTED`, preventing unnecessary work when the app is in the background.
+</Aside>
+
+### Theming
+
+Follow Material Design 3. Customize `MaterialTheme` for brand requirements. Support dynamic color on Android 12+ and provide both light and dark themes.
+
+### Performance
+
+Use `LazyColumn`/`LazyRow` for lists, `derivedStateOf` for computed state that shouldn't trigger recomposition on every change, and profile with Android Studio's Layout Inspector to catch unnecessary recompositions.
 
 ## Navigation
 
-We use Navigation Compose for handling navigation between screens. This provides type-safe navigation arguments, deep linking support, and integration with the back stack. Navigation logic is centralized and testable.
+Use **Navigation Compose** with type-safe routes. Centralize navigation logic so composables don't depend on the navigator directly.
+
+```kotlin
+// Define routes as a sealed hierarchy
+@Serializable sealed interface Route {
+    @Serializable data object AlbumList : Route
+    @Serializable data class AlbumDetail(val id: String) : Route
+}
+
+// NavHost with composable destinations
+NavHost(navController, startDestination = Route.AlbumList) {
+    composable<Route.AlbumList> {
+        AlbumListScreen(onAlbumClick = { navController.navigate(Route.AlbumDetail(it.id)) })
+    }
+    composable<Route.AlbumDetail> { backStackEntry ->
+        val route = backStackEntry.toRoute<Route.AlbumDetail>()
+        AlbumDetailScreen(albumId = route.id)
+    }
+}
+```
 
 ## Data Persistence
 
-For local data persistence, we use Room Database as our primary solution, with DataStore for key-value storage and preferences. Room provides compile-time verification of SQL queries and seamless integration with coroutines and Flow.
+**Room** for structured/relational data, **DataStore** for key-value preferences. Room provides compile-time SQL verification, type-safe queries, and seamless Flow integration.
+
+```kotlin
+@Entity
+data class Album(
+    @PrimaryKey val id: String,
+    val name: String,
+    val createdAt: Long,
+)
+
+@Dao
+interface AlbumDao {
+    @Query("SELECT * FROM album ORDER BY createdAt DESC")
+    fun observeAll(): Flow<List<Album>>
+
+    @Upsert
+    suspend fun upsert(albums: List<Album>)
+}
+```
+
+Use DataStore (not SharedPreferences) for preferences — it's async-first and won't block the main thread.
 
 ## Networking
 
-We use Ktor Client and Retrofit for networking operations. Ktor is preferred for new services due to its Kotlin-first design and coroutines support, while Retrofit remains in use for existing integrations. Both libraries integrate well with coroutines for async operations.
+Use **Ktor Client** for new code — it's Kotlin-first with native coroutine support and kotlinx.serialization. Retrofit is acceptable in existing codebases but not for new services.
+
+```kotlin
+val client = HttpClient(OkHttp) {
+    install(ContentNegotiation) { json() }
+    defaultRequest { url("https://api.example.com") }
+}
+
+suspend fun getAlbums(): List<Album> =
+    client.get("/albums").body()
+```
+
+Use sealed classes or `Result` types for response handling — don't let network errors propagate as uncaught exceptions.
 
 ## Testing
 
-We use JUnit 5 for unit tests, Espresso for UI testing, and Compose UI Testing for Compose-specific tests. We maintain a minimum 80% code coverage and practice TDD. Tests are required for all new code and bug fixes.
+Use **JUnit 5** for unit tests and **Compose UI Testing** for UI tests. Prefer real implementations over mocks — only mock at hard boundaries (network, hardware, system services).
 
-## Code Style and Linting
+```kotlin
+@Test
+fun `loading albums updates state to success`() = runTest {
+    val repository = FakeAlbumRepository(albums = listOf(Album.fixture()))
+    val viewModel = AlbumViewModel(repository)
 
-We use ktlint and detekt for code style enforcement and static analysis. These tools run in pre-commit hooks and CI pipelines. We follow Kotlin's official coding conventions with 2-space indentation.
+    viewModel.load()
+    advanceUntilIdle()
+
+    assertThat(viewModel.uiState.value).isInstanceOf(AlbumUiState.Success::class.java)
+}
+```
+
+Use `runTest` from `kotlinx-coroutines-test` — it provides a `TestDispatcher` and lets you control virtual time with `advanceUntilIdle()`.
+
+For E2E testing of critical user flows, use **Maestro**.
 
 ## Build Configuration
 
-We use Gradle with Kotlin DSL for build configuration. Gradle version catalogs manage all dependencies centrally, ensuring version consistency across modules. This approach reduces duplication and makes dependency updates easier.
+Gradle with **Kotlin DSL** and **version catalogs** for centralized dependency management. Use build types (`debug`/`release`) and product flavors for environment-specific configuration.
 
-## Rules
+## Code Style
 
-### Platform and Tooling
+Use **ktlint** for formatting and **detekt** for static analysis. Both run in pre-commit hooks and CI. Follow Kotlin's official coding conventions:
 
-1. Target latest stable Kotlin version
-2. Support minimum Android API level 31 (Android 12)
-3. Use Gradle with Kotlin DSL for build configuration
-4. Use Gradle version catalogs for all dependencies
-5. Use ktlint for code formatting
-6. Use detekt for static analysis
-7. 2-space indentation required
-8. Do not use Kotlin Multiplatform (KMP) - use Expo and Flutter instead
+- `camelCase` for functions, properties, and variables
+- `PascalCase` for classes, interfaces, objects, and enums
+- `SCREAMING_SNAKE_CASE` for compile-time constants (`const val`)
+- Boolean properties use `is`/`has`/`can` prefixes: `isLoading`, `hasAccess`
+- Maximum function length: 50 lines
 
-### Null Safety
-
-9. Never use force unwrapping (`!!`)
-10. Prefer safe calls (`?.`) for nullable operations
-
-### Concurrency
-
-11. Use Kotlin Coroutines with Flow for all async operations
-12. Launch coroutines in appropriate scopes (viewModelScope, lifecycleScope)
-
-### Architecture and UI
-
-13. Use Jetpack Compose exclusively for UI development
-14. Follow MVVM architecture with ViewModel component
-15. Follow Compose state management patterns
-16. Use Hilt for dependency injection
-
-### Navigation
-
-17. Use Navigation Compose for navigation
-
-### Data Persistence
-
-18. Use Room Database for primary data persistence
-19. Use DataStore for key-value storage and preferences
-
-### Networking
-
-20. Use Ktor Client for new networking code
-21. Retrofit allowed for existing integrations
-
-### Testing
-
-22. Use JUnit 5 for unit tests
-23. Use Espresso for UI testing
-24. Use Compose UI Testing for Compose components
-25. Minimum 80% code coverage required
-26. Practice Test-Driven Development (TDD) strictly
-27. Tests required for all new code and bug fixes
-
-### Naming Conventions
-
-28. Follow Kotlin coding conventions
-29. Use snake_case for variables and functions
-30. Use PascalCase for classes and interfaces
-31. Use SCREAMING_SNAKE_CASE for constants
-32. Boolean variables should be descriptive without prefixes (active, permitted)
-33. Maximum function length is 50 lines
-
-### Documentation
-
-34. JSDoc-style documentation required for complex functions only
-35. Include parameter and return documentation for documented functions
-36. No TODO/FIXME/HACK comments - use issue tracker
+:::tip[Quick Reference]
+Looking for the rules checklist? See [Kotlin rules](/reference/languages/#kotlin).
+:::

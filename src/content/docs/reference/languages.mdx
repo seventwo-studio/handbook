@@ -1,0 +1,287 @@
+---
+title: Language Rules
+description: Quick-reference rules for all programming languages used at SevenTwo Studio.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Quick-reference checklist for language-specific rules. Each section links to the full guide with explanations and code examples.
+
+## TypeScript
+
+<Aside>
+Full guide: [TypeScript Coding Standards](/languages/typescript/)
+</Aside>
+
+### Type Safety
+
+1. TypeScript must be used in strict mode with all strict flags enabled
+2. The `any` type is never allowed without explicit justification in code review
+3. Non-null assertions (`!`) are never allowed
+4. Use `interface` for object types and `type` for unions and complex compositions
+5. Use `as const` assertions for literal types
+6. Use TypeScript enums for fixed sets of related constants
+7. Minimize type casting - solve type issues upstream instead
+
+### Function Declarations
+
+8. Use arrow functions for callbacks, traditional declarations for named top-level functions
+9. Maximum function length is 50 lines
+
+### Testing
+
+10. All new code must have unit tests with minimum 80% coverage
+11. Tests must be placed in `/tests` directory with `*.test.ts` naming
+12. Follow Arrange-Act-Assert (AAA) pattern in all tests
+13. Practice Test-Driven Development (TDD) strictly
+
+### Error Handling
+
+14. Use try-catch with custom error classes for error handling
+15. Use async/await with try-catch for async error handling
+16. Generic error messages for users, detailed logging for debugging
+
+### Module Organization
+
+17. Organize imports using auto-sorting tools
+18. Use `@/` path aliases for imports
+19. Barrel files only for public APIs
+
+### Code Style
+
+20. Use Biome for formatting and linting
+21. 2-space indentation required
+22. 120-character line limit
+23. Always use semicolons
+24. No use of biome-ignore comments to bypass linting issues
+
+### Naming Conventions
+
+25. Minimum variable names must be descriptive (no single-letter except loop indices)
+26. Use snake_case for variables and functions
+27. Use SCREAMING_SNAKE_CASE for constants
+28. Use PascalCase for React components
+29. Use Type suffix for types (UserType)
+30. Use Props suffix for component props
+31. Boolean variables should be descriptive without prefixes (active, permitted)
+
+### Documentation
+
+32. JSDoc required for complex functions only
+33. Include @param and @returns in JSDoc documentation
+34. Inline comments encouraged for complex logic only
+35. No TODO/FIXME/HACK comments - use issue tracker
+
+## Swift
+
+<Aside>
+Full guide: [Swift Coding Standards](/languages/swift/)
+</Aside>
+
+### Platform and Tooling
+
+1. Target Swift 6.2 and iOS 18+
+2. Use Swift Package Manager (SPM) for dependencies
+3. Zero third-party dependencies by default — justify any addition
+4. Use Tuist for project generation
+5. Use SwiftFormat in pre-commit hooks and CI
+
+### Optionals and Safety
+
+6. Never force unwrap (`!`) or use implicitly unwrapped optionals
+7. Prefer `guard let` for early exits, `if let` for scoped checks
+
+### Concurrency
+
+8. Use `async`/`await` and structured concurrency exclusively
+9. Use actors for shared mutable state
+10. Mark types crossing concurrency boundaries as `Sendable`
+11. Enable strict concurrency checking project-wide
+12. Annotate ViewModels and UI-touching code with `@MainActor`
+13. Cancel tasks when they're no longer needed — prefer `.task(id:)` for view-scoped work
+
+### Architecture and UI
+
+14. Use SwiftUI exclusively — no UIKit unless wrapping unavailable system API
+15. Follow MVVM: `@Observable` ViewModels, declarative Views
+16. Use `@Environment` with custom keys for dependency injection
+17. Use `NavigationStack` with value-based navigation
+18. Drive sheets and alerts from state bindings, not imperative calls
+19. Keep `body` under ~40 lines — extract subviews and modifiers
+20. Organize project by feature module, not by type
+
+### Data Persistence
+
+21. Use SwiftData with `@Model` and `@Query` for primary persistence
+22. Use direct SQLite for complex queries or performance-critical paths
+23. Wrap persistence behind protocols for testability
+
+### Networking
+
+24. Use URLSession exclusively — no third-party HTTP libraries
+25. Use `async`/`await` APIs for all requests
+
+### Testing
+
+26. Use Swift Testing framework (`@Test`, `#expect`) — not XCTest
+27. Prefer real implementations over mocks — only mock at hard boundaries
+28. Use Maestro for E2E / UI testing of critical flows
+29. Every feature should have tests that exercise actual behavior
+
+### Naming and Style
+
+30. `camelCase` for variables and functions, `PascalCase` for types and protocols
+31. Boolean properties use `is`/`has`/`can` prefixes
+32. Maximum function length: 50 lines
+33. No `TODO`/`FIXME`/`HACK` comments — use the issue tracker
+
+## Kotlin
+
+<Aside>
+Full guide: [Kotlin Coding Standards](/languages/kotlin/)
+</Aside>
+
+### Platform and Tooling
+
+1. Target latest stable Kotlin version
+2. Support minimum Android API 31 (Android 12)
+3. Do not use Kotlin Multiplatform — use Expo for cross-platform
+4. Use Gradle with Kotlin DSL and version catalogs
+5. Use ktlint for formatting, detekt for static analysis
+
+### Null Safety
+
+6. Never use the not-null assertion operator (`!!`)
+7. Use safe calls (`?.`) and elvis (`?:`) for nullable operations
+8. Add explicit nullability annotations at Java interop boundaries
+
+### Concurrency
+
+9. Use Kotlin Coroutines with Flow for all async operations
+10. Launch coroutines in lifecycle-aware scopes (`viewModelScope`, `lifecycleScope`)
+11. Never use `GlobalScope`
+12. Use `StateFlow` for observable state, `SharedFlow` for one-shot events
+13. Use `SharingStarted.WhileSubscribed(5000)` for StateFlows in ViewModels
+14. Handle exceptions inside coroutines — don't let them silently swallow
+
+### Architecture and UI
+
+15. Use Jetpack Compose exclusively — no XML layouts
+16. Follow MVVM with Android `ViewModel`
+17. ViewModels must not reference `Context`, views, or lifecycle components
+18. Model UI state with sealed classes/interfaces
+19. Use `collectAsStateWithLifecycle()` to observe flows in Compose
+20. Use Hilt for dependency injection with constructor injection
+21. Follow Material Design 3, support dynamic color and light/dark themes
+
+### Navigation
+
+22. Use Navigation Compose with type-safe routes
+23. Centralize navigation logic outside of composables
+
+### Data Persistence
+
+24. Use Room for structured data with Flow-returning DAOs
+25. Use DataStore for preferences — not SharedPreferences
+26. Use `@Upsert` over manual insert-or-update logic
+
+### Networking
+
+27. Use Ktor Client with kotlinx.serialization for new code
+28. Retrofit allowed in existing codebases only
+29. Use sealed classes or Result types for response handling
+
+### Testing
+
+30. Use JUnit 5 for unit tests, Compose UI Testing for UI
+31. Use `runTest` with `TestDispatcher` for coroutine tests
+32. Prefer real implementations over mocks — only mock at hard boundaries
+33. Use Maestro for E2E testing of critical flows
+34. Every feature should have tests that exercise actual behavior
+
+### Naming and Style
+
+35. `camelCase` for functions and properties, `PascalCase` for types
+36. `SCREAMING_SNAKE_CASE` for `const val` only
+37. Boolean properties use `is`/`has`/`can` prefixes
+38. Maximum function length: 50 lines
+39. No `TODO`/`FIXME`/`HACK` comments — use the issue tracker
+
+## Rust
+
+<Aside>
+Full guide: [Rust Coding Standards](/languages/rust/)
+</Aside>
+
+### Platform and Tooling
+
+1. Target latest stable Rust version
+2. Use Rust 2021 edition
+3. Use Cargo for package management and builds
+4. Commit Cargo.toml and Cargo.lock to version control
+5. Use rustfmt for code formatting
+6. Use clippy for linting
+7. Enable strict clippy lints
+8. All code must be rustfmt'd before commit
+9. 2-space indentation required
+10. 120-character line limit
+
+### Safety and Unsafe Code
+
+11. Avoid `unsafe` code unless absolutely necessary
+12. Document and justify all unsafe blocks with clear explanations
+13. Minimize scope of unsafe code and encapsulate behind safe APIs
+
+### Error Handling
+
+14. Use `Result<T, E>` with custom errors for all fallible operations
+15. Use thiserror for deriving error types
+16. Use anyhow for application-level error handling
+17. Error messages must be descriptive with clear context
+18. Use `?` operator for error propagation
+
+### Async Runtime
+
+19. Use Tokio as async runtime
+
+### Web Framework
+
+20. Use Axum for web services and APIs
+
+### Serialization
+
+21. Use serde for serialization and deserialization
+
+### Database Access
+
+22. Use SQLx for database operations
+23. Leverage SQLx's compile-time SQL verification
+
+### Testing
+
+24. Use Rust's built-in testing framework (cargo test)
+25. Unit tests inline with code, integration tests in tests/
+26. Minimum 80% code coverage required
+27. Practice Test-Driven Development (TDD) strictly
+28. Tests required for all new code and bug fixes
+29. Follow Arrange-Act-Assert (AAA) pattern in tests
+30. Minimal mocking in tests - prefer real implementations
+
+### Code Organization
+
+31. Organize code into focused modules
+32. Make most items private by default
+
+### Naming Conventions
+
+33. Use snake_case for variables, functions, and modules
+34. Use PascalCase for types and traits
+35. Use SCREAMING_SNAKE_CASE for constants
+36. Boolean variables should be descriptive without prefixes (active, permitted)
+37. Maximum function length is 50 lines
+
+### Documentation
+
+38. Documentation comments (///) required for complex functions
+39. Include parameter and return documentation for documented functions
+40. No TODO/FIXME/HACK comments - use issue tracker

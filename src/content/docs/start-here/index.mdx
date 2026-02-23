@@ -1,0 +1,31 @@
+---
+title: Welcome
+description: What the SevenTwo Studio Handbook is and how to use it.
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+The SevenTwo Studio Handbook is the single source of truth for how we build software. Whether you're joining a project, starting your own, or learning how a professional engineering team operates — this is where the standards live.
+
+It covers language conventions, app architecture patterns, and engineering practices. Everything you need to write code the SevenTwo way.
+
+## Two Ways to Use This Handbook
+
+<CardGrid>
+  <Card title="I'm learning" icon="open-book">
+    New to this codebase or to professional development in general? Follow the [Learning Path](/start-here/first-day/) — it walks you through setup, your first PR, your first feature, and beyond. Then use [Pick Your Stack](/start-here/pick-your-stack/) to find the guides relevant to what you're building.
+  </Card>
+
+  <Card title="I need a quick answer" icon="magnifier">
+    Already familiar with the codebase and need to look something up? Jump straight to the [Reference](/reference/languages/) for consolidated rule checklists, or browse the guides for in-depth explanations and code examples.
+  </Card>
+</CardGrid>
+
+## What's Inside
+
+<CardGrid>
+  <LinkCard title="Languages" description="TypeScript, Swift, Kotlin, and Rust coding standards." href="/languages/" />
+  <LinkCard title="App Types" description="Expo, Hono, Astro, TanStack, iOS, and Android patterns." href="/app-types/" />
+  <LinkCard title="Practices" description="Architecture, version control, security, databases, and DevOps." href="/practices/" />
+  <LinkCard title="Reference" description="Every rule in one place — searchable checklists by topic." href="/reference/languages/" />
+</CardGrid>
