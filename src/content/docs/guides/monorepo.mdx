@@ -1,0 +1,164 @@
+---
+title: Monorepo
+description: How Bun workspaces structure our multi-package projects and keep shared code in sync.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## When to Use a Monorepo
+
+Not every project needs a monorepo. A single-app project — one API, one frontend, one deployment — is better off as a standalone repository. Monorepos earn their complexity when:
+
+- A product has **multiple deployable apps** that share code (e.g., a mobile app, a web dashboard, and an API that all use the same validation schemas and types).
+- You need **shared packages** that evolve alongside the apps (a design system, a logger, localization strings).
+- Changes frequently **span multiple packages** and you want to review, test, and ship them in a single PR rather than coordinating across repos.
+
+If none of these apply, keep it simple with a single repo.
+
+## Bun Workspaces
+
+We use **Bun workspaces** for monorepo management. Bun handles dependency resolution, hoisting, and cross-package linking natively — no additional tooling layer needed.
+
+A workspace is declared in the root `package.json`:
+
+```json
+{
+  "name": "my-project",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"]
+}
+```
+
+That's the entire monorepo configuration. Bun reads the `workspaces` field, resolves inter-package dependencies, and links everything together on `bun install`.
+
+<Aside>
+We use Bun workspaces, not Turborepo. Bun's built-in workspace support handles dependency resolution and task running. Adding Turborepo on top adds complexity without enough benefit for our project sizes.
+</Aside>
+
+## Directory Structure
+
+Every monorepo follows the same top-level layout:
+
+```
+my-project/
+├── apps/
+│   ├── api/          # Hono API, deploys to Cloudflare Workers
+│   ├── web/          # Astro or TanStack frontend
+│   └── mobile/       # Expo app
+├── packages/
+│   ├── shared/       # Types, validation schemas, constants
+│   ├── ui/           # Shared UI components (if applicable)
+│   └── config/       # Shared Biome, TypeScript configs
+├── package.json      # Root workspace config
+├── biome.json        # Root Biome config (shared by all packages)
+└── tsconfig.json     # Root TypeScript config (extended by packages)
+```
+
+**`apps/`** contains deployable applications. Each app has its own `package.json`, build command, and deployment configuration. Apps can depend on packages but never on each other.
+
+**`packages/`** contains shared libraries. Each package has its own `package.json` and exports a well-defined API. Packages can depend on other packages but must not create circular dependencies.
+
+## Shared Packages
+
+Shared packages are the primary reason monorepos exist. Common packages include:
+
+**`packages/shared`** — Types, Zod validation schemas, and constants that multiple apps need. This is the most common shared package. When the API defines a response shape and the frontend needs to parse it, that schema lives here.
+
+```typescript
+// packages/shared/src/schemas/user.ts
+import { z } from "zod";
+
+export const userSchema = z.object({
+  id: z.string(),
+  email: z.string().email(),
+  name: z.string().min(1),
+});
+
+export type User = z.infer<typeof userSchema>;
+```
+
+**`packages/ui`** — Shared UI components used across web and mobile apps. For React Native projects using NativeWind, shared components can work across platforms.
+
+**`packages/config`** — Shared configuration for Biome, TypeScript, and other tools. Rather than duplicating a `biome.json` in every app, apps extend a shared base config.
+
+## Cross-Package Dependencies
+
+Packages reference each other using the workspace protocol in `package.json`:
+
+```json
+{
+  "name": "@my-project/api",
+  "dependencies": {
+    "@my-project/shared": "workspace:*"
+  }
+}
+```
+
+The `workspace:*` protocol tells Bun to resolve this dependency from the local workspace rather than the npm registry. Changes to `@my-project/shared` are immediately visible to `@my-project/api` without publishing or version bumping.
+
+### Dependency Rules
+
+- **Apps can depend on packages.** This is the normal flow — apps consume shared code.
+- **Packages can depend on other packages.** A `ui` package might depend on `shared` for types.
+- **Apps must never depend on other apps.** If two apps need to share code, extract it into a package.
+- **No circular dependencies.** If package A depends on B, B cannot depend on A. This is enforced by Bun's resolution — circular workspace deps cause install failures.
+
+## Running Tasks
+
+Bun supports running scripts across workspaces using the `--filter` flag:
+
+```bash
+# Run tests in all packages
+bun --filter '*' test
+
+# Run build in the API app only
+bun --filter @my-project/api run build
+
+# Run typecheck everywhere
+bun --filter '*' run typecheck
+```
+
+The root `package.json` typically defines convenience scripts that wrap common filter patterns:
+
+```json
+{
+  "scripts": {
+    "build": "bun --filter '*' run build",
+    "test": "bun --filter '*' test",
+    "lint": "biome check .",
+    "typecheck": "bun --filter '*' run typecheck"
+  }
+}
+```
+
+Note that `lint` runs Biome at the root level — Biome is workspace-aware and checks all files from the root config. No need to run it per-package.
+
+## CI for Monorepos
+
+The CI pipeline runs at the root level and validates all packages together:
+
+1. `bun install` at the root resolves all workspace dependencies.
+2. `bun run lint` checks formatting and linting across the entire repo.
+3. `bun run typecheck` verifies types in all packages.
+4. `bun run test` runs tests across all packages.
+5. Each app's `build` command runs to verify it compiles.
+
+Deployment is per-app — each app in `apps/` has its own deployment workflow that only triggers when files in that app or its dependencies change. This prevents unnecessary deploys when an unrelated app is modified.
+
+<Aside type="tip">
+Use path filters in GitHub Actions to scope workflows. If only `apps/api/` changed, only the API deployment runs. If `packages/shared/` changed, all apps that depend on it get rebuilt and deployed.
+</Aside>
+
+## When to Split
+
+A monorepo should eventually split when:
+
+- **Build times become painful** — if CI takes 10+ minutes and path filtering isn't helping.
+- **Teams diverge** — if separate teams own separate apps and rarely touch shared code.
+- **Release cadences differ** — if the API ships daily but the mobile app ships weekly, coordinating in one repo adds friction.
+
+Until then, the monorepo keeps everything in sync and makes cross-cutting changes trivial.
+
+:::tip[Quick Reference]
+For architecture patterns, see [Architecture standards](/practices/architecture/). For CI/CD setup, see [DevOps & Deployment standards](/practices/devops-deployment/).
+:::

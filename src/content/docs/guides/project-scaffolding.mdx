@@ -1,0 +1,78 @@
+---
+title: Project Scaffolding
+description: How we start new projects, what the templates provide, and the decisions behind the defaults.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Why Templates Matter
+
+Starting a project from scratch means making dozens of small decisions before writing any product code — formatter config, linting rules, tsconfig settings, CI workflows, directory layout. Templates capture those decisions once so every new project begins in a known-good state.
+
+At SevenTwo Studio, every project starts from a template. This guarantees that tooling, formatting, and CI are consistent from the first commit, and that anyone joining the project can orient themselves immediately.
+
+## The Scaffolder
+
+We use `create-seventwo` — a Bun-based CLI scaffolder — to generate new projects. Running it gives you a menu of templates and sets up the project directory with all the tooling configured and ready to go.
+
+```bash
+bun create seventwo my-project
+```
+
+The scaffolder handles initial setup: installing dependencies, initializing git, and writing the configuration files. What comes out is a project you can immediately run, build, and deploy.
+
+<Aside>
+`create-seventwo` lives in the [seventwo-studio/create-seventwo](https://github.com/seventwo-studio/create-seventwo) repository. If you need to add or update a template, that's where to look.
+</Aside>
+
+## What Every Project Gets
+
+Regardless of which template you pick, every generated project includes:
+
+- **Biome** — handles both formatting and linting. No ESLint, no Prettier. One tool, one config file, fast execution. See the [TypeScript standards](/languages/typescript/) for our Biome conventions.
+- **TypeScript** (for TS projects) — strict mode enabled, with a tsconfig tuned for the target runtime (Bun, Cloudflare Workers, or the browser).
+- **Git setup** — `.gitignore` tailored to the stack, conventional commit expectations, and branch protection assumptions.
+- **CI workflow** — a GitHub Actions pipeline that runs lint, typecheck, test, and build on every push and PR. Only GitHub-authored or officially verified actions are used.
+- **Editor config** — settings for VS Code and Cursor that match the Biome formatting rules so what you see locally matches what CI enforces.
+
+This baseline means you never need to manually wire up formatting, linting, or CI. It's done.
+
+## Choosing a Template
+
+Templates are organized by app type. Each one maps to a specific combination of framework, runtime, and deployment target:
+
+| Template | Stack | Deploy to |
+|---|---|---|
+| **Hono API** | Hono on Bun, Drizzle, Zod | Cloudflare Workers |
+| **Expo App** | Expo with expo-router, NativeWind | App stores + EAS |
+| **Astro Site** | Astro with Tailwind | Cloudflare Pages |
+| **TanStack Dashboard** | React, TanStack Router, Tailwind | Cloudflare Pages |
+
+Each template's conventions are documented in the corresponding [App Types](/app-types/) guide. When in doubt about which template to pick, the [Pick Your Stack](/start-here/pick-your-stack/) decision tree can help.
+
+## Decisions in the Templates
+
+Templates aren't just boilerplate — they encode architectural decisions:
+
+**Bun everywhere.** The runtime, package manager, and test runner are all Bun. This removes the Node/npm/yarn/pnpm decision tree entirely and gives us a single, fast tool for the JavaScript/TypeScript ecosystem.
+
+**Biome over ESLint + Prettier.** A single tool replaces two. It's faster, has fewer configuration files, and removes the category of bugs caused by ESLint and Prettier disagreeing.
+
+**Result types over exceptions.** API templates return `{ ok, error }` objects from service functions instead of throwing. Exceptions are reserved for truly exceptional situations at system boundaries — unexpected database failures, network errors, out-of-memory conditions. See the [Architecture standards](/practices/architecture/) for the full pattern.
+
+**Flat, layer-based structure.** Projects organize code by technical concern (`components/`, `services/`, `routes/`) rather than by feature. This is simpler to navigate and scales well until a project reaches the size where a monorepo split makes more sense.
+
+## After Scaffolding
+
+Once you've generated a project, the first things to do are:
+
+1. Verify the build works — `bun run build` should succeed with zero errors.
+2. Run the dev server — confirm the app starts and you can see output.
+3. Run the tests — `bun test` should pass with the included smoke tests.
+4. Make your first commit and push — the CI workflow should trigger and go green.
+
+From there, you're building product features on a solid foundation.
+
+:::tip[Quick Reference]
+For specific conventions per stack, see the [App Types](/app-types/) section. For language-level rules, see [Languages](/languages/).
+:::

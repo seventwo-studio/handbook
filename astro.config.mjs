@@ -44,6 +44,33 @@ export default defineConfig({
 					],
 				},
 				{
+					label: "Guides",
+					collapsed: true,
+					items: [
+						{ label: "Overview", slug: "guides" },
+						{
+							label: "Project Scaffolding",
+							slug: "guides/project-scaffolding",
+							badge: "New",
+						},
+						{
+							label: "Auth & Database",
+							slug: "guides/auth-and-database",
+							badge: "New",
+						},
+						{
+							label: "Deployment",
+							slug: "guides/deployment",
+							badge: "New",
+						},
+						{
+							label: "Monorepo",
+							slug: "guides/monorepo",
+							badge: "New",
+						},
+					],
+				},
+				{
 					label: "Languages",
 					collapsed: true,
 					items: [

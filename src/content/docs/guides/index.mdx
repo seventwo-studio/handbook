@@ -1,0 +1,35 @@
+---
+title: Guides
+description: Conceptual explanations of how and why our stack works the way it does.
+tableOfContents: false
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+Our standards tell you _what_ the rules are. These guides explain _why_ those decisions were made and _how_ the pieces fit together. Read them to understand the thinking behind the stack before diving into specific rules.
+
+<CardGrid stagger>
+  <Card title="Project Scaffolding" icon="add-document">
+    How we start new projects, what every template sets up, and the decisions baked into each scaffold.
+
+    [Read the guide →](/guides/project-scaffolding/)
+  </Card>
+
+  <Card title="Auth & Database" icon="seti:lock">
+    Better Auth for identity, Drizzle for data access, and when to reach for D1 versus Postgres.
+
+    [Read the guide →](/guides/auth-and-database/)
+  </Card>
+
+  <Card title="Deployment" icon="rocket">
+    How code moves from pull request to production across Cloudflare, Railway, and our homelab.
+
+    [Read the guide →](/guides/deployment/)
+  </Card>
+
+  <Card title="Monorepo" icon="puzzle">
+    How Bun workspaces structure our multi-package projects and keep shared code in sync.
+
+    [Read the guide →](/guides/monorepo/)
+  </Card>
+</CardGrid>

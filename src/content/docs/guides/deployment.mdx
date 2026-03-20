@@ -1,0 +1,102 @@
+---
+title: Deployment
+description: How code moves from pull request to production across our deployment targets.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## The Big Picture
+
+Every SevenTwo Studio project follows the same deployment philosophy: **merge to main, deploy automatically**. There's no manual deploy step, no "deployment day," and no SSH-ing into servers. Code goes through CI, gets validated, and ships.
+
+The target platform depends on the project, but the pipeline shape is always the same: push → CI checks → preview deploy on PR → merge → production deploy.
+
+## Deployment Targets
+
+### Cloudflare (Default)
+
+Cloudflare is our primary deployment target for most projects:
+
+- **Workers** for Hono APIs and server-side logic. Workers run at the edge in 300+ locations, start in under 5ms, and scale to zero when idle. This is where D1 databases live too, making the API and its data colocated.
+- **Pages** for static sites and SPAs — Astro sites, TanStack dashboards, and marketing pages. Pages deploys from a build output directory and distributes globally via Cloudflare's CDN.
+
+Cloudflare is the default because it's fast, cheap at low-to-medium scale, and eliminates server management entirely. You deploy code, not infrastructure.
+
+### Railway
+
+Railway handles the cases Cloudflare can't:
+
+- Applications that need **persistent processes** — long-running servers, WebSocket connections, background job workers.
+- Projects that need a **managed Postgres database** with direct TCP connections (Neon is the Postgres provider, but Railway hosts the app that connects to it).
+- Services with **large bundle sizes** or **long startup times** that don't fit Workers' constraints.
+
+Railway provides a simple container-based deployment model. Push code, Railway builds the Docker image, and deploys it. Environment variables, scaling, and logging are handled through their dashboard.
+
+### Homelab (Kubernetes)
+
+For personal infrastructure and self-hosted services, we run Kubernetes on a homelab cluster managed with **Flux CD** for GitOps. The `kustodian` repository defines the cluster state declaratively — push a manifest change, and Flux reconciles it.
+
+<Aside>
+Homelab deployments are for internal/personal services only. Production applications serving external users deploy to Cloudflare or Railway.
+</Aside>
+
+## The CI Pipeline
+
+Every project has a GitHub Actions workflow in `.github/workflows/` that runs on every push and pull request. The pipeline is predictable:
+
+1. **Install** — `bun install` to restore dependencies.
+2. **Lint** — `bun run lint` (Biome check) to catch style and correctness issues.
+3. **Typecheck** — `bun run typecheck` (tsc --noEmit) to verify types.
+4. **Test** — `bun test` to run the test suite.
+5. **Build** — `bun run build` to verify the project compiles.
+
+If any step fails, the pipeline fails and the PR can't merge. This is non-negotiable — broken code doesn't reach main.
+
+<Aside type="caution">
+We only use GitHub-authored actions, officially verified actions, or actions published by framework makers (Cloudflare, Railway, etc.). No random third-party actions. This is a supply chain security decision.
+</Aside>
+
+## Preview Deployments
+
+Every pull request gets a preview deployment — an isolated environment running the PR's code with its own URL. Preview deploys let reviewers see the change running, not just read the diff.
+
+- **Cloudflare Pages** creates preview URLs automatically for every PR.
+- **Cloudflare Workers** preview deployments use Wrangler's `--env` flag to deploy to a preview namespace.
+- **Railway** creates ephemeral environments linked to PRs.
+
+Preview environments use separate databases and environment variables to avoid interfering with production data. The preview URL is posted as a comment on the PR automatically.
+
+## Environment Management
+
+Configuration is always via environment variables — never hardcoded. Each environment (local, preview, staging, production) has its own set of variables:
+
+- **Local** — `.env` files (git-ignored). Developers copy `.env.example` and fill in values.
+- **Preview** — set in the CI workflow or deployment platform, scoped to the preview environment.
+- **Production** — set in the deployment platform's dashboard (Cloudflare, Railway).
+
+Secrets (API keys, database URLs, signing keys) are managed through the deployment platform's secrets management. They're never committed to the repository, never printed in logs, and never exposed in build output.
+
+## What Happens on Merge
+
+When a PR merges to main:
+
+1. CI runs one final time on the merge commit.
+2. The deployment platform detects the push to main and triggers a production deploy.
+3. For Cloudflare, the new Worker or Pages build replaces the current version atomically.
+4. For Railway, a new container is built and deployed with zero-downtime rollover.
+
+If something goes wrong, rollback is immediate — Cloudflare keeps previous versions and can roll back instantly, Railway re-deploys the previous container image.
+
+## When to Use What
+
+| Scenario | Deploy to |
+|---|---|
+| API with D1 database | Cloudflare Workers |
+| Static site or SPA | Cloudflare Pages |
+| API needing Postgres or WebSockets | Railway |
+| Background job worker | Railway |
+| Self-hosted internal tool | Homelab (Kubernetes) |
+
+:::tip[Quick Reference]
+For full CI/CD rules, see [DevOps & Deployment standards](/practices/devops-deployment/). For release versioning, see [Release Strategy](/practices/release-strategy/).
+:::

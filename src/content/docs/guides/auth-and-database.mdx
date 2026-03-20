@@ -1,0 +1,108 @@
+---
+title: Auth & Database
+description: How authentication and data storage work across our stacks, and the decisions behind each choice.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## The Stack at a Glance
+
+Every SevenTwo Studio project that needs users and data follows the same pattern: **Better Auth** for authentication, **Drizzle ORM** for data access, and either **Cloudflare D1** or **Postgres via Neon** as the database engine. This isn't a suggestion — it's the default unless there's a compelling reason to diverge.
+
+## Why Better Auth
+
+Better Auth is a TypeScript-native authentication library that runs on any runtime — Node, Bun, Cloudflare Workers, or edge functions. We chose it over alternatives like NextAuth, Clerk, or Auth0 for a few reasons:
+
+- **Self-hosted by default.** No vendor lock-in, no per-user pricing, no external dependency for a critical path. Auth data lives in our own database.
+- **Framework-agnostic.** The same auth setup works across Hono APIs, Astro sites, and Expo apps (via `@better-auth/expo`). One library to learn, regardless of the frontend.
+- **Database-backed sessions.** Sessions are stored in the database, not in JWTs. This makes revocation instant and avoids the category of bugs caused by stale tokens.
+- **Plugin architecture.** Features like two-factor auth, magic links, and social logins are opt-in plugins rather than an all-or-nothing bundle.
+
+<Aside>
+For Expo/React Native apps, the `@better-auth/expo` package provides the client-side integration with secure token storage via AsyncStorage.
+</Aside>
+
+## How Auth Fits In
+
+Better Auth plugs into the API layer. In a Hono API, it's middleware that handles session management, login, registration, and token validation. The API exposes auth routes (usually under `/api/auth/*`), and client applications call these routes through the Better Auth client SDK.
+
+The flow looks like this:
+
+1. Client calls the auth endpoint (login, register, OAuth callback).
+2. Better Auth validates credentials against the database.
+3. A session record is created in the sessions table.
+4. The client receives a session token (stored as an HTTP-only cookie or in AsyncStorage on native).
+5. Subsequent API requests include the token; Better Auth middleware validates it and attaches the user to the request context.
+
+This keeps auth concerns out of business logic. Route handlers receive an authenticated user object and don't need to think about tokens or sessions.
+
+## Why Drizzle
+
+Drizzle is our ORM because it hits the right balance between type safety and SQL transparency:
+
+- **Schema as code.** You define tables in TypeScript, and those definitions are the single source of truth for the database structure, migration generation, and query types.
+- **SQL-like API.** Drizzle queries read like SQL, not like an abstraction layer trying to hide SQL. When you need to optimize a query, you can see exactly what SQL it generates.
+- **Zero runtime overhead.** Drizzle compiles to SQL at build time. There's no query builder interpreting objects at runtime.
+- **First-class TypeScript.** Query results are fully typed based on the schema definition. Column types, nullable columns, and relation types flow through without manual type annotations.
+
+### Schema Conventions
+
+Drizzle schemas live in a `db/schema/` directory (or `src/db/schema/` depending on the project). Each domain gets its own schema file — `users.ts`, `posts.ts`, `subscriptions.ts` — rather than one massive schema file.
+
+Tables and columns use `snake_case` naming, matching SQL conventions. Foreign keys follow the `{table}_id` pattern. Every table has `created_at` and `updated_at` timestamps.
+
+```typescript
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+});
+```
+
+### Migrations
+
+Drizzle generates migrations from schema diffs. When you change a schema file and run `drizzle-kit generate`, it produces a SQL migration file. These migration files are version-controlled and applied automatically during deployment.
+
+Migrations should be backward-compatible when possible — the new schema works with both the old and new application code. This enables zero-downtime deployments.
+
+See the [Database standards](/practices/database/) for full conventions on indexing, transactions, and query performance.
+
+## Choosing a Database
+
+The decision between D1 and Postgres is straightforward:
+
+**Use Cloudflare D1 (SQLite) when:**
+- The project deploys to Cloudflare Workers
+- The data model is relatively simple
+- You don't need advanced Postgres features (full-text search, JSONB queries, PostGIS)
+- You want zero infrastructure management — D1 is serverless and scales automatically
+
+**Use Postgres via Neon when:**
+- The project has a complex data model with many relations
+- You need advanced query capabilities (CTEs, window functions, full-text search)
+- The project deploys to Railway or needs a persistent database server
+- Multiple services need to share the same database
+
+<Aside type="tip">
+Most new projects start with D1. It's simpler, cheaper, and works perfectly for the majority of applications. Only reach for Postgres when you hit a concrete limitation.
+</Aside>
+
+## How It All Connects
+
+A typical Hono API project wires these pieces together:
+
+1. **Drizzle schema** defines the database tables, including Better Auth's required tables (users, sessions, accounts).
+2. **Better Auth** is configured with Drizzle as its database adapter, pointing at either D1 or Neon.
+3. **Hono middleware** uses Better Auth to validate sessions on protected routes.
+4. **Route handlers** use Drizzle to query and mutate data, receiving typed results based on the schema.
+5. **Zod schemas** validate incoming request data before it reaches Drizzle, providing the application-layer validation that complements database constraints.
+
+This layering keeps each concern isolated: Zod validates input, Better Auth handles identity, Drizzle manages data, and the database enforces constraints.
+
+:::tip[Quick Reference]
+For database-specific rules, see [Database standards](/practices/database/). For API patterns, see [Hono API](/app-types/hono-api/). For security practices around auth, see [Security standards](/practices/security/).
+:::
