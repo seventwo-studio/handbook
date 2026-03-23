@@ -1,0 +1,186 @@
+---
+title: Monorepo Structure
+description: Canonical repository layout for all SevenTwo Studio projects.
+---
+
+Every SevenTwo Studio project lives in a monorepo with the same top-level shape. Consistent structure means tooling, CI, and onboarding work the same way regardless of which product you are working on.
+
+## Top-Level Layout
+
+```
+/
+├── apps/
+│   ├── api/            # Hono API
+│   ├── mobile/         # Expo App (iOS + Android + Web)
+│   ├── ios/            # Native iOS (SwiftUI)
+│   ├── android/        # Native Android (Kotlin + Compose)
+│   ├── web/            # Astro Website
+│   └── dashboard/      # TanStack Dashboard
+├── packages/
+│   ├── ui/             # Shared React components (shadcn/ui base)
+│   ├── config/         # Shared tooling config (tsconfig, eslint, prettier)
+│   └── types/          # Shared TypeScript types and Zod schemas
+├── turbo.json
+├── package.json        # pnpm workspace root
+└── pnpm-workspace.yaml
+```
+
+Not every project uses every app slot. A project with only a mobile app and an API will have only `apps/api` and `apps/mobile`. Add slots as needed; never restructure the top-level shape.
+
+## Tooling
+
+| Tool | Purpose |
+|------|---------|
+| **pnpm workspaces** | Package manager and workspace linking |
+| **Turborepo** | Task orchestration, caching, and pipeline ordering |
+| **TypeScript project references** | Cross-package type checking |
+
+## Shared Packages
+
+### `packages/ui`
+
+Base component library built on shadcn/ui. Consumed by `apps/web`, `apps/dashboard`, and any Expo web target.
+
+```
+packages/ui/
+├── src/
+│   └── components/     # shadcn/ui base components
+├── package.json
+└── tsconfig.json
+```
+
+### `packages/config`
+
+Shared tooling presets. Never copy config files between apps—import from here.
+
+```
+packages/config/
+├── tsconfig/           # Base tsconfig presets (base, node, react)
+├── eslint/             # Shared ESLint flat configs
+└── prettier/           # Prettier config
+```
+
+### `packages/types`
+
+API contracts, Zod schemas, and domain types shared across the full stack. The source of truth for request/response shapes used by both the API and its consumers.
+
+```
+packages/types/
+├── src/
+│   ├── api/            # Zod schemas for API requests and responses
+│   └── domain/         # Shared domain types (User, Product, etc.)
+├── package.json
+└── tsconfig.json
+```
+
+## App Slots
+
+### `apps/api` — Hono API
+
+```
+apps/api/
+├── src/
+│   ├── routes/         # Route handlers organized by resource
+│   ├── middleware/     # Auth, logging, request ID, error handling
+│   ├── services/       # Business logic (no framework dependencies)
+│   ├── db/
+│   │   ├── schema/     # Drizzle schema definitions
+│   │   └── migrations/ # Generated migration files
+│   ├── lib/            # Utilities, error classes, helpers
+│   └── index.ts        # App entry point
+├── tests/
+├── drizzle.config.ts
+├── package.json
+└── tsconfig.json
+```
+
+### `apps/mobile` — Expo App
+
+```
+apps/mobile/
+├── app/                # Expo Router file-based routes
+│   ├── (auth)/         # Auth flow screens
+│   ├── (tabs)/         # Tab-based screens
+│   └── _layout.tsx     # Root layout
+├── components/         # Shared UI components
+├── hooks/              # Custom React hooks
+├── stores/             # Zustand stores
+├── lib/                # API client, utilities
+├── assets/             # Images, fonts
+├── tests/
+├── app.json
+├── package.json
+└── tsconfig.json
+```
+
+### `apps/ios` — Native iOS (SwiftUI)
+
+```
+apps/ios/
+├── Sources/
+│   ├── App/            # App entry point and configuration
+│   ├── Views/          # SwiftUI views
+│   ├── ViewModels/     # ObservableObject ViewModels
+│   ├── Models/         # Data models and domain types
+│   ├── Services/       # Networking, persistence, platform services
+│   └── Resources/      # Assets, localization
+├── Tests/              # Unit and integration tests
+├── UITests/            # UI tests
+└── App.xcodeproj
+```
+
+### `apps/android` — Native Android (Kotlin + Compose)
+
+```
+apps/android/
+├── app/
+│   └── src/
+│       ├── main/
+│       │   ├── java/studio/seventwo/<app>/
+│       │   │   ├── ui/             # Composable screens and components
+│       │   │   ├── viewmodel/      # ViewModels and UI state
+│       │   │   ├── data/           # Repositories, DAOs, network
+│       │   │   └── di/             # Hilt modules
+│       │   └── res/                # Drawables, strings, themes
+│       ├── test/                   # Unit tests
+│       └── androidTest/            # Instrumentation tests
+├── build.gradle.kts
+└── settings.gradle.kts
+```
+
+### `apps/web` — Astro Website
+
+```
+apps/web/
+├── src/
+│   ├── pages/          # File-based routes
+│   │   └── api/        # Server API endpoints
+│   ├── components/     # Astro and React components
+│   ├── layouts/        # Page layouts
+│   ├── content/        # Content collections (MDX, markdown)
+│   └── styles/         # Global styles
+├── public/             # Static assets
+├── astro.config.mjs
+├── package.json
+└── tsconfig.json
+```
+
+### `apps/dashboard` — TanStack Dashboard
+
+```
+apps/dashboard/
+├── src/
+│   ├── routes/         # TanStack Router file-based routes
+│   ├── components/     # UI components (shadcn/ui + custom)
+│   ├── hooks/          # Custom React hooks
+│   ├── stores/         # Zustand stores
+│   └── lib/            # API client, utilities, table configs
+├── tests/
+├── vite.config.ts
+├── package.json
+└── tsconfig.json
+```
+
+:::tip[Quick Reference]
+Looking for the rules checklist? See [Practice Rules](/reference/practices/#monorepo-structure).
+:::

@@ -80,6 +80,24 @@ Dashboards deploy to Railway, Cloudflare, or other platforms supporting Node.js 
 
 Preview deployments are created for pull requests, enabling visual testing before merging.
 
+## Folder Structure
+
+TanStack dashboards live at `apps/dashboard` in the monorepo. See [Monorepo Structure](/practices/monorepo/#appsdashboard--tanstack-dashboard) for the full layout.
+
+```
+apps/dashboard/
+├── src/
+│   ├── routes/         # TanStack Router file-based routes
+│   ├── components/     # UI components (shadcn/ui + custom)
+│   ├── hooks/          # Custom React hooks
+│   ├── stores/         # Zustand stores
+│   └── lib/            # API client, utilities, table configs
+├── tests/
+├── vite.config.ts
+├── package.json
+└── tsconfig.json
+```
+
 :::tip[Quick Reference]
 Looking for the rules checklist? See [TanStack Dashboard rules](/reference/app-types/#tanstack-dashboard).
 :::

@@ -106,6 +106,10 @@ export default defineConfig({
 							label: "Release Strategy",
 							slug: "practices/release-strategy",
 						},
+						{
+							label: "Monorepo Structure",
+							slug: "practices/monorepo",
+						},
 					],
 				},
 				{

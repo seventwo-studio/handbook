@@ -70,6 +70,24 @@ We profile regularly with Instruments to identify performance bottlenecks and fi
 
 We integrate deeply with iOS platform features: widgets, notifications, shortcuts, ShareSheet, and system services. These integrations make our apps feel native and leverage iOS's unique capabilities.
 
+## Folder Structure
+
+Native iOS projects live at `apps/ios` in the monorepo. See [Monorepo Structure](/practices/monorepo/#appsios--native-ios-swiftui) for the full layout.
+
+```
+apps/ios/
+├── Sources/
+│   ├── App/            # App entry point and configuration
+│   ├── Views/          # SwiftUI views
+│   ├── ViewModels/     # ObservableObject ViewModels
+│   ├── Models/         # Data models and domain types
+│   ├── Services/       # Networking, persistence, platform services
+│   └── Resources/      # Assets, localization
+├── Tests/              # Unit and integration tests
+├── UITests/            # UI tests
+└── App.xcodeproj
+```
+
 :::tip[Quick Reference]
 Looking for the rules checklist? See [Native iOS rules](/reference/app-types/#native-ios-swiftui).
 :::

@@ -82,6 +82,27 @@ We profile regularly with Android Studio Profiler to identify performance bottle
 
 We integrate with Android platform features: widgets, notifications, shortcuts, work manager, and system services. These integrations leverage Android's unique capabilities and make our apps feel native.
 
+## Folder Structure
+
+Native Android projects live at `apps/android` in the monorepo. See [Monorepo Structure](/practices/monorepo/#appsandroid--native-android-kotlin--compose) for the full layout.
+
+```
+apps/android/
+├── app/
+│   └── src/
+│       ├── main/
+│       │   ├── java/studio/seventwo/<app>/
+│       │   │   ├── ui/             # Composable screens and components
+│       │   │   ├── viewmodel/      # ViewModels and UI state
+│       │   │   ├── data/           # Repositories, DAOs, network
+│       │   │   └── di/             # Hilt modules
+│       │   └── res/                # Drawables, strings, themes
+│       ├── test/                   # Unit tests
+│       └── androidTest/            # Instrumentation tests
+├── build.gradle.kts
+└── settings.gradle.kts
+```
+
 :::tip[Quick Reference]
 Looking for the rules checklist? See [Native Android rules](/reference/app-types/#native-android-kotlin--compose).
 :::

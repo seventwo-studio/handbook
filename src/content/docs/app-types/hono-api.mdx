@@ -60,6 +60,27 @@ API tests verify correct status codes, response bodies, validation behavior, and
 
 Hono APIs can be deployed to Railway, GCP, Cloudflare Workers, or other platforms depending on runtime requirements. We use environment variables for configuration and feature flags for gradual rollouts.
 
+## Folder Structure
+
+Hono APIs live at `apps/api` in the monorepo. See [Monorepo Structure](/practices/monorepo/#appsapi--hono-api) for the full layout.
+
+```
+apps/api/
+├── src/
+│   ├── routes/         # Route handlers organized by resource
+│   ├── middleware/     # Auth, logging, request ID, error handling
+│   ├── services/       # Business logic (no framework dependencies)
+│   ├── db/
+│   │   ├── schema/     # Drizzle schema definitions
+│   │   └── migrations/ # Generated migration files
+│   ├── lib/            # Utilities, error classes, helpers
+│   └── index.ts        # App entry point
+├── tests/
+├── drizzle.config.ts
+├── package.json
+└── tsconfig.json
+```
+
 :::tip[Quick Reference]
 Looking for the rules checklist? See [Hono API rules](/reference/app-types/#hono-api).
 :::
