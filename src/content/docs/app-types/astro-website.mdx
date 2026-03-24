@@ -78,6 +78,25 @@ We track Core Web Vitals including Largest Contentful Paint (LCP), First Input D
 
 We ensure WCAG 2.1 AA compliance for all pages. Astro's minimal JavaScript approach helps accessibility by default. We add ARIA labels, semantic HTML, and keyboard navigation for interactive components.
 
+## Folder Structure
+
+Astro sites live at `apps/web` in the monorepo. See [Monorepo Structure](/practices/monorepo/#appsweb--astro-website) for the full layout.
+
+```
+apps/web/
+├── src/
+│   ├── pages/          # File-based routes
+│   │   └── api/        # Server API endpoints
+│   ├── components/     # Astro and React components
+│   ├── layouts/        # Page layouts
+│   ├── content/        # Content collections (MDX, markdown)
+│   └── styles/         # Global styles
+├── public/             # Static assets
+├── astro.config.mjs
+├── package.json
+└── tsconfig.json
+```
+
 :::tip[Quick Reference]
 Looking for the rules checklist? See [Astro Website rules](/reference/app-types/#astro-website).
 :::

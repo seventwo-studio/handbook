@@ -80,6 +80,27 @@ We use EAS (Expo Application Services) for building and submitting apps to app s
 
 Preview builds are created for pull requests, allowing testing on real devices before merging.
 
+## Folder Structure
+
+Expo apps live at `apps/mobile` in the monorepo. See [Monorepo Structure](/practices/monorepo/#appsmobile--expo-app) for the full layout.
+
+```
+apps/mobile/
+├── app/                # Expo Router file-based routes
+│   ├── (auth)/         # Auth flow screens
+│   ├── (tabs)/         # Tab-based screens
+│   └── _layout.tsx     # Root layout
+├── components/         # Shared UI components
+├── hooks/              # Custom React hooks
+├── stores/             # Zustand stores
+├── lib/                # API client, utilities
+├── assets/             # Images, fonts
+├── tests/
+├── app.json
+├── package.json
+└── tsconfig.json
+```
+
 :::tip[Quick Reference]
 Looking for the rules checklist? See [Expo App rules](/reference/app-types/#expo-app).
 :::
