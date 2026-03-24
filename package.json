@@ -6,10 +6,13 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro"
+    "preview": "bun run build && wrangler dev",
+    "astro": "astro",
+    "deploy": "bun run build && wrangler deploy",
+    "cf-typegen": "wrangler types"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "12",
     "@astrojs/starlight": "^0.36.2",
     "@fontsource/geist-mono": "^5.2.7",
     "@fontsource/geist-sans": "^5.2.5",
@@ -21,6 +24,7 @@
     "starlight-links-validator": "^0.19.1",
     "starlight-llms-txt": "^0.6.0",
     "starlight-theme-black": "^0.6.0",
-    "starlight-theme-rapide": "^0.5.2"
+    "starlight-theme-rapide": "^0.5.2",
+    "wrangler": "^4.76.0"
   }
 }

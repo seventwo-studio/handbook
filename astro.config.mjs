@@ -7,10 +7,13 @@ import starlightImageZoom from "starlight-image-zoom";
 import starlightLlmsTxt from "starlight-llms-txt";
 import robotsTxt from "astro-robots-txt";
 
+import cloudflare from "@astrojs/cloudflare";
+
 // https://astro.build/config
 export default defineConfig({
-	site: "https://handbook.seventwo.studio",
-	integrations: [
+    site: "https://handbook.seventwo.studio",
+
+    integrations: [
 		starlight({
 			plugins: [
 				starlightThemeRapide(),
@@ -136,4 +139,6 @@ export default defineConfig({
 		}),
 		robotsTxt(),
 	],
+
+    adapter: cloudflare()
 });
