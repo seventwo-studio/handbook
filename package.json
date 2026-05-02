@@ -16,7 +16,7 @@
     "@astrojs/starlight": "^0.36.2",
     "@fontsource/geist-mono": "^5.2.7",
     "@fontsource/geist-sans": "^5.2.5",
-    "astro": "^5.6.1",
+    "astro": "^6.1.6",
     "astro-og-canvas": "^0.7.2",
     "astro-robots-txt": "^1.0.0",
     "sharp": "^0.34.2",
